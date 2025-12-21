@@ -6,12 +6,15 @@
   "author": "",
   "scripts": {
     "dev": "convex dev",
-    "dev:setup": "convex dev --configure --until-success"
+    "dev:setup": "convex dev --configure --until-success",
+    "check-types": "tsc -p convex/tsconfig.json"
   },
   "dependencies": {
-    "convex": "catalog:",
-    "better-auth": "catalog:",
+    "@ai-sdk/openai": "^2.0.88",
     "@convex-dev/better-auth": "catalog:",
+    "ai": "^5.0.116",
+    "better-auth": "catalog:",
+    "convex": "catalog:",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },

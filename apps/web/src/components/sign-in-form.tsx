@@ -1,5 +1,6 @@
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
+import { Github } from "lucide-react";
 import { toast } from "sonner";
 import z from "zod";
 
@@ -115,6 +116,49 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             </Button>
           )}
         </form.Subscribe>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={async () => {
+              await authClient.signIn.social({
+                provider: "github",
+              });
+            }}
+          >
+            <Github className="mr-2 h-4 w-4" />
+            Github
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={async () => {
+              await authClient.signIn.social({
+                provider: "google",
+              });
+            }}
+          >
+            <svg
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              className="mr-2 h-4 w-4 fill-current"
+            >
+              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.47-1.92 4.64-1.2 1.2-3.08 2.58-5.92 2.58-4.79 0-8.34-3.89-8.34-8.67Q4.14 8.07 8.34 3.33c2.84 0 4.72 1.38 5.92 2.58l2.31-2.31C14.61 1.65 11.96 0 8.34 0 3.73 0 0 3.73 0 8.34s3.73 8.34 8.34 8.34c2.54 0 4.46-.83 5.97-2.4 1.54-1.54 2.03-3.71 2.03-5.59 0-.58-.05-1.12-.13-1.63l-4.07.01z" />
+            </svg>
+            Google
+          </Button>
+        </div>
       </form>
 
       <div className="mt-4 text-center">
