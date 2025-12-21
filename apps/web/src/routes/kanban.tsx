@@ -59,8 +59,8 @@ function KanbanPage() {
       <Authenticated>
         <div className="flex flex-col gap-4 h-full">
           <div>
-            <h1 className="text-2xl font-bold">Kanban Board</h1>
-            <p className="text-muted-foreground">Manage your repository issues and PRs.</p>
+            <h1 className="text-2xl font-bold">Flow</h1>
+            <p className="text-muted-foreground">Manage your repository workflow.</p>
           </div>
           <KanbanBoard items={kanbanItems} onMove={handleMove} />
         </div>

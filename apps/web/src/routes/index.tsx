@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
 function HomeComponent() {
   const user = useQuery(api.auth.getCurrentUser);
   const healthCheck = useQuery(api.healthCheck.get);
-  
+
   const recentRepos = useQuery(api.repositories.queries.list, user ? {} : "skip");
   const recentIssues = useQuery(api.issues.queries.listRecent, user ? {} : "skip");
   const starredIssues = useQuery(api.issues.queries.listFromStarred, user ? {} : "skip");
@@ -36,11 +36,11 @@ function HomeComponent() {
               </span>
             </h1>
             <p className="mx-auto mb-10 max-w-[800px] text-xl text-muted-foreground sm:text-2xl">
-              BetterRepo brings your repositories, issues, and AI assistant together. 
+              BetterRepo brings your repositories, issues, and AI assistant together.
               Built for teams who want to move fast without losing track of quality.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link to="/chat" className={cn(buttonVariants({ size: "lg" }), "h-12 px-8 text-base")}>
+              <Link to="/auth" className={cn(buttonVariants({ size: "lg" }), "h-12 px-8 text-base")}>
                 Get Started for Free
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -54,7 +54,7 @@ function HomeComponent() {
                 Star on GitHub
               </a>
             </div>
-            
+
             {/* Mock UI Preview */}
             <div className="mt-16 overflow-hidden rounded-xl border bg-muted/30 p-2 shadow-2xl">
               <div className="aspect-video rounded-lg border bg-background p-4 shadow-inner">
@@ -82,7 +82,7 @@ function HomeComponent() {
               </div>
             </div>
           </div>
-          
+
           {/* Background Gradients */}
           <div className="absolute top-0 -z-10 h-full w-full opacity-20 dark:opacity-10">
             <div className="absolute left-[10%] top-[20%] h-[300px] w-[300px] rounded-full bg-primary blur-[120px]" />
@@ -104,7 +104,7 @@ function HomeComponent() {
                 icon: Cpu,
               },
               {
-                title: "Unified Kanban",
+                title: "Flow",
                 description: "A familiar board view for your issues and pull requests, synchronized in real-time with Convex.",
                 icon: Kanban,
               },
@@ -153,7 +153,7 @@ function HomeComponent() {
             </div>
           </div>
         </section>
-        
+
         {/* Footer */}
         <footer className="container mx-auto px-4 py-12 text-center text-muted-foreground">
           <p>© {new Date().getFullYear()} BetterRepo. Open source under the MIT License.</p>
