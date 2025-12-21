@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { AuthContainer } from "@/components/auth-container";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/kanban")({
   component: KanbanPage,
@@ -55,18 +56,27 @@ function KanbanPage() {
   ];
 
   return (
-    <div className="p-6 h-[calc(100vh-100px)]">
+    <div className="flex-1 flex flex-col min-h-0 bg-background/50 overflow-hidden">
       <Authenticated>
-        <div className="flex flex-col gap-4 h-full">
-          <div>
-            <h1 className="text-2xl font-bold">Flow</h1>
-            <p className="text-muted-foreground">Manage your repository workflow.</p>
+        <div className="flex flex-col h-full">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 border-b bg-background/50 shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Flow</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Manage your repository workflow in real-time.</p>
+              </div>
+              {/* Board actions could go here */}
+            </div>
           </div>
-          <KanbanBoard items={kanbanItems} onMove={handleMove} />
+          <div className="flex-1 min-h-0 p-2 sm:p-4 overflow-hidden">
+            <KanbanBoard items={kanbanItems} onMove={handleMove} />
+          </div>
         </div>
       </Authenticated>
       <Unauthenticated>
-        <AuthContainer />
+        <div className="p-6">
+          <AuthContainer />
+        </div>
       </Unauthenticated>
     </div>
   );

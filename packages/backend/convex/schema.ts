@@ -22,9 +22,9 @@ export default defineSchema({
     .index("by_assigneeId", ["assigneeId"])
     .index("by_repositoryId", ["repositoryId"])
     .vectorIndex("by_embedding", {
-    vectorField: "embedding",
-    dimensions: 1536, // Standard for many models, can adjust if needed
-  }),
+      vectorField: "embedding",
+      dimensions: 1536, // Standard for many models, can adjust if needed
+    }),
   repositories: defineTable({
     name: v.string(),
     owner: v.string(), // e.g., "username" or "orgname"
@@ -69,4 +69,10 @@ export default defineSchema({
     text: v.string(),
     completed: v.boolean(),
   }),
+  userProfiles: defineTable({
+    userId: v.string(),
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    lastUpdated: v.number(),
+  }).index("by_userId", ["userId"]),
 });

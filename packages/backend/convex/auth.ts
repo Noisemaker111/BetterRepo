@@ -51,7 +51,25 @@ export const getCurrentUser = query({
   returns: v.any(),
   handler: async function (ctx) {
     try {
-      return await authComponent.getAuthUser(ctx);
+      const user = await authComponent.getAuthUser(ctx);
+      if (!user) return null;
+
+      const userId = user.userId || user._id.toString();
+      const profile = await ctx.db
+        .query("userProfiles")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+
+      if (profile) {
+        return {
+          ...user,
+          name: profile.name ?? user.name,
+          image: profile.image ?? user.image,
+          lastProfileUpdate: profile.lastUpdated,
+        };
+      }
+
+      return user;
     } catch (e) {
       return null;
     }
