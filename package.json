@@ -19,7 +19,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-"build:vercel": "cd packages/backend && bunx convex codegen && bunx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd \"npm --prefix ../../apps/web run build\"",    "check-types": "turbo check-types",
+    "build:vercel": "cd packages/backend && bunx convex codegen && bunx convex deploy --cmd-url-env-var-name VITE_CONVEX_URL --cmd \"npm --prefix ../../apps/web run build\"",    "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
     "dev:server": "turbo -F @BetterRepo/backend dev",
