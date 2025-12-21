@@ -13,11 +13,9 @@ export const Route = createFileRoute("/")({
 
 function HomeComponent() {
   const user = useQuery(api.auth.getCurrentUser);
-  const healthCheck = useQuery(api.healthCheck.get);
 
   const recentRepos = useQuery(api.repositories.queries.list, user ? {} : "skip");
-  const recentIssues = useQuery(api.issues.queries.listRecent, user ? {} : "skip");
-  const starredIssues = useQuery(api.issues.queries.listFromStarred, user ? {} : "skip");
+  const forYouIssues = useQuery(api.issues.queries.listForYou, user ? {} : "skip");
 
   if (user === undefined) {
     return (
@@ -207,81 +205,59 @@ function HomeComponent() {
                   <div className="mb-4 sm:mb-6 flex items-center justify-between">
                     <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
                       <div className="w-1.5 h-6 bg-primary rounded-full" />
-                      Active Issues
+                      For You Issues
                     </h2>
                     <Link to="/issues" className="text-xs sm:text-sm text-primary hover:underline font-medium">
                       View all
                     </Link>
                   </div>
-
-                  <div className="flex flex-col gap-3 sm:gap-4">
-                    {recentIssues === undefined ? (
-                      Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="h-28 sm:h-32 rounded-2xl glass-card animate-pulse" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                    {forYouIssues === undefined ? (
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-36 sm:h-40 rounded-2xl glass-card animate-pulse" />
                       ))
-                    ) : recentIssues.length === 0 ? (
-                      <div className="glass-card rounded-2xl p-8 sm:p-12 text-center border-dashed border-border/40">
-                        <div className="inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-muted/20 text-muted-foreground mb-4">
-                          <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground mb-4">You're all caught up! No active issues.</p>
-                        <Button variant="outline" size="sm" className="rounded-full text-xs">Create one</Button>
+                    ) : forYouIssues.length === 0 ? (
+                      <div className="col-span-full glass-card rounded-2xl p-8 text-center bg-muted/5 border-dashed border-border/40">
+                        <Zap className="mx-auto mb-3 h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
+                        <p className="text-xs sm:text-sm text-muted-foreground">Nothing to see here for now. Try starring some repos!</p>
                       </div>
                     ) : (
-                      recentIssues.map((issue) => (
+                      forYouIssues.map((issue: any) => (
                         <Link
                           key={issue._id}
                           to="/issues"
-                          className="group flex items-center justify-between p-4 sm:p-5 rounded-xl sm:rounded-2xl glass-card border-border/40 hover:border-primary/40 transition-all hover:translate-x-1"
+                          className="glass-card rounded-2xl p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group block relative overflow-hidden h-full flex flex-col"
                         >
-                          <div className="flex flex-col gap-1 sm:gap-1.5 min-w-0 text-left">
-                            <h3 className="text-sm sm:text-base font-semibold truncate group-hover:text-primary transition-colors text-foreground">
-                              {issue.title}
-                            </h3>
-                            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                              <span className="font-medium text-primary/70">#{issue._id.slice(-4)}</span>
-                              <span>•</span>
-                              <span>{new Date(issue._creationTime).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                          <Badge variant="secondary" className="rounded-full px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 text-primary border-none text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0">
-                            {issue.status}
-                          </Badge>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                </section>
-
-                <section className="text-left">
-                  <div className="mb-4 sm:mb-6 flex items-center justify-between">
-                    <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
-                      <div className="w-1.5 h-6 bg-purple-500 rounded-full" />
-                      Starred Projects
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {starredIssues === undefined ? (
-                      Array.from({ length: 2 }).map((_, i) => (
-                        <div key={i} className="h-36 sm:h-40 rounded-2xl glass-card animate-pulse" />
-                      ))
-                    ) : starredIssues.length === 0 ? (
-                      <div className="col-span-full glass-card rounded-2xl p-8 text-center bg-muted/5 border-dashed border-border/40">
-                        <Star className="mx-auto mb-3 h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
-                        <p className="text-xs sm:text-sm text-muted-foreground">Star repositories to see updates here.</p>
-                      </div>
-                    ) : (
-                      starredIssues.map((issue) => (
-                        <div key={issue._id} className="glass-card rounded-2xl p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group">
                           <div className="flex items-center justify-between mb-3 sm:mb-4 text-foreground">
-                            <Badge variant="outline" className="text-[9px] sm:text-[10px] font-bold text-foreground/70 rounded-md">{issue.status}</Badge>
-                            <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500/20 group-hover:fill-yellow-500 transition-all" />
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "text-[9px] sm:text-[10px] font-bold rounded-md uppercase tracking-wider",
+                                issue.priority === "urgent" && "bg-red-500/10 text-red-500 border-red-500/20",
+                                issue.priority === "high" && "bg-orange-500/10 text-orange-500 border-orange-500/20",
+                                issue.priority === "medium" && "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                                (issue.priority === "low" || !issue.priority) && "bg-muted/10 text-muted-foreground border-border/20"
+                              )}
+                            >
+                              {issue.priority || "no priority"}
+                            </Badge>
+                            <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-none">
+                              {issue.status}
+                            </Badge>
                           </div>
-                          <h3 className="font-semibold text-xs sm:text-sm mb-2 line-clamp-1 text-foreground text-left">{issue.title}</h3>
-                          <div className="h-1 w-full bg-border/20 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary/40 w-2/3 group-hover:bg-primary transition-all shadow-[0_0_8px_var(--primary)]" />
+                          <h3 className="font-semibold text-sm sm:text-base mb-2 line-clamp-2 text-foreground text-left group-hover:text-primary transition-colors">
+                            {issue.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground mt-auto">
+                            <span className="font-medium text-primary/70">#{issue._id.slice(-4)}</span>
+                            <span>•</span>
+                            <span>{new Date(issue._creationTime).toLocaleDateString()}</span>
                           </div>
-                        </div>
+
+                          {issue.priority === "urgent" && (
+                            <div className="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 bg-red-500/10 blur-2xl rounded-full" />
+                          )}
+                        </Link>
                       ))
                     )}
                   </div>
@@ -325,23 +301,6 @@ function HomeComponent() {
                   </nav>
                 </div>
 
-                <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-3 sm:space-y-4 text-left">
-                  <div className="flex items-center justify-between text-foreground">
-                    <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">System Status</h2>
-                    <div className={cn(
-                      "h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full",
-                      healthCheck === "OK" ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" : "bg-red-500"
-                    )} />
-                  </div>
-                  <div className="flex items-center justify-between text-xs sm:text-sm">
-                    <span className="text-muted-foreground hover:text-foreground transition-colors">API Latency</span>
-                    <span className="font-medium text-foreground">12ms</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs sm:text-sm">
-                    <span className="text-muted-foreground">Convex Sync</span>
-                    <span className="text-green-500 font-medium">Active</span>
-                  </div>
-                </div>
               </aside>
             </div>
           </div>

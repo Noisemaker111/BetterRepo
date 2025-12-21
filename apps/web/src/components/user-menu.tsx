@@ -40,42 +40,49 @@ export default function UserMenu() {
         className="w-56 bg-card/95 backdrop-blur-xl border-white/10 rounded-2xl p-2"
         align="end"
       >
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1 p-2">
-            <p className="text-sm font-bold leading-none">{user?.name || "User"}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1 p-2 text-left">
+              <p className="text-sm font-bold leading-none">{user?.name || "User"}</p>
+              <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator className="bg-white/5" />
         <DropdownMenuGroup className="space-y-1">
           <DropdownMenuItem
             className="rounded-xl focus:bg-primary/10 transition-colors cursor-pointer"
           >
-            <Link to="/settings" className="flex items-center gap-2 w-full">
+            <Link
+              to="/settings"
+              className="flex items-center gap-2 w-full"
+            >
               <Settings className="w-4 h-4" />
               Settings
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator className="bg-white/5" />
-        <DropdownMenuItem
-          variant="destructive"
-          className="rounded-xl focus:bg-destructive/10 text-destructive transition-colors cursor-pointer flex items-center gap-2"
-          onClick={() => {
-            authClient.signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  navigate({
-                    to: "/auth",
-                  });
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            variant="destructive"
+            className="rounded-xl focus:bg-destructive/10 text-destructive transition-colors cursor-pointer flex items-center gap-2"
+            onClick={() => {
+              authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    navigate({
+                      to: "/auth",
+                    });
+                  },
                 },
-              },
-            });
-          }}
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </DropdownMenuItem>
+              });
+            }}
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

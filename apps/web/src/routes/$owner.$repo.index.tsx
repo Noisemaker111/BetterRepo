@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { Book, FileCode, GitBranch, Star, Eye, ChevronRight, File } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,13 @@ export const Route = createFileRoute("/$owner/$repo/")({
 function RepoIndex() {
   const { owner, repo: repoName } = Route.useParams();
   const repository = useQuery(api.repositories.queries.getByName, { owner, name: repoName });
+  const recordVisit = useMutation(api.repositories.mutations.recordVisit);
+
+  useEffect(() => {
+    if (repository?._id) {
+      recordVisit({ repositoryId: repository._id });
+    }
+  }, [repository?._id, recordVisit]);
 
   if (repository === undefined) return null;
   if (!repository) return <div>Not found</div>;

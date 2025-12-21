@@ -8,13 +8,19 @@ import type { DataModel } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 
-const siteUrl = process.env.SITE_URL!;
+// Allow fallback for development - siteUrl should be the frontend URL
+const siteUrl = process.env.SITE_URL || "http://localhost:3001";
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
 function createAuth(ctx: GenericCtx<DataModel>) {
   return betterAuth({
-    trustedOrigins: [siteUrl, "http://localhost:3001"],
+    // trustedOrigins should contain ORIGINS only (scheme + host + port), not paths
+    trustedOrigins: [
+      siteUrl,
+      "http://localhost:3001",
+      "http://localhost:3000", // In case of port variations during dev
+    ],
     database: authComponent.adapter(ctx),
     socialProviders: {
       ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {
@@ -27,6 +33,8 @@ function createAuth(ctx: GenericCtx<DataModel>) {
         github: {
           clientId: process.env.GITHUB_CLIENT_ID,
           clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          // Request extra scopes for repo access and webhooks
+          scope: ["read:user", "user:email", "repo", "admin:repo_hook"],
         },
       } : {}),
     },
