@@ -1,28 +1,23 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { ModeToggle } from "./mode-toggle";
-import { GitBranch, Kanban, ListTodo } from "lucide-react";
 import { FcTreeStructure } from "react-icons/fc";
 import { useQuery } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import UserMenu from "./user-menu";
-import { Button, buttonVariants } from "./ui/button";
+import { buttonVariants } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { useAgentSidebar } from "@/hooks/use-agent-sidebar";
 
 export default function Header() {
   const user = useQuery(api.auth.getCurrentUser);
-  const { toggle } = useAgentSidebar();
+  const params = useParams({ strict: false }) as { owner?: string; repo?: string };
 
-  const links = [
-    { to: "/issues", label: "Issues", icon: ListTodo },
-    { to: "/pull-requests", label: "PRs", icon: GitBranch },
-    { to: "/kanban", label: "Flow", icon: Kanban },
-  ] as const;
+  const owner = params.owner || user?.name?.toLowerCase().replace(/\s+/g, '-') || "author";
+  const repo = params.repo || "BetterRepo";
 
   return (
     <header className="sticky top-0 z-50 w-full glass border-b">
       <div className="container flex h-16 items-center justify-between gap-4">
-        <div className="flex items-center gap-4 sm:gap-8">
+        <div className="flex items-center gap-4 sm:gap-6">
           <Link to="/" className="flex items-center gap-2 group transition-all duration-300 active:scale-95 shrink-0">
             <div className="p-1 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
               <FcTreeStructure className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -32,18 +27,21 @@ export default function Header() {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {links.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all hover:bg-white/5 text-muted-foreground hover:text-foreground [&.active]:bg-primary/10 [&.active]:text-primary"
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          {/* Breadcrumb Navigation */}
+          <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
+            <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
+            <span className="text-muted-foreground px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
+              {owner}
+            </span>
+            <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
+            <Link
+              to="/$owner/$repo"
+              params={{ owner, repo }}
+              className="text-foreground font-bold hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[120px] sm:max-w-none"
+            >
+              {repo}
+            </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -66,20 +64,6 @@ export default function Header() {
               Sign In
             </Link>
           )}
-
-          {/* Mobile Nav - icons only for small screens */}
-          <div className="md:hidden flex items-center gap-0.5 sm:gap-1 border-l pl-2 sm:pl-3 ml-1 border-border/40">
-            {links.map(({ to, icon: Icon, label }) => (
-              <Link
-                key={to}
-                to={to}
-                title={label}
-                className="p-1.5 sm:p-2 rounded-lg transition-colors text-muted-foreground hover:text-foreground [&.active]:text-primary [&.active]:bg-primary/5"
-              >
-                <Icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </header>

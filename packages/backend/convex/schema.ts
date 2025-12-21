@@ -31,7 +31,8 @@ export default defineSchema({
     description: v.optional(v.string()),
     ownerId: v.string(), // user id
     isPublic: v.boolean(),
-  }).index("by_ownerId", ["ownerId"]),
+  }).index("by_ownerId", ["ownerId"])
+    .index("by_owner_name", ["owner", "name"]),
   stars: defineTable({
     userId: v.string(),
     repositoryId: v.id("repositories"),
@@ -50,9 +51,11 @@ export default defineSchema({
     sourceBranch: v.string(),
     targetBranch: v.string(),
     issueId: v.optional(v.id("issues")),
+    repositoryId: v.optional(v.id("repositories")),
   }).index("by_status", ["status"])
     .index("by_authorId", ["authorId"])
-    .index("by_issueId", ["issueId"]),
+    .index("by_issueId", ["issueId"])
+    .index("by_repositoryId", ["repositoryId"]),
   labels: defineTable({
     name: v.string(),
     color: v.string(), // hex code

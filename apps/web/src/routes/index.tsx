@@ -309,7 +309,8 @@ function HomeComponent() {
                       recentRepos.map((repo) => (
                         <Link
                           key={repo._id}
-                          to="/kanban"
+                          to="/$owner/$repo/flow"
+                          params={{ owner: repo.owner, repo: repo.name }}
                           className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 group text-foreground"
                         >
                           <div className="p-1.5 sm:p-2 rounded-lg bg-background border group-hover:border-primary/40 transition-colors">

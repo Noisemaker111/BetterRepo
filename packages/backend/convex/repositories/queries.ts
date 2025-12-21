@@ -47,3 +47,18 @@ export const getStarred = query({
     return repos.filter((repo) => repo !== null);
   },
 });
+
+export const getByName = query({
+  args: {
+    owner: v.string(),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("repositories")
+      .withIndex("by_owner_name", (q) =>
+        q.eq("owner", args.owner).eq("name", args.name)
+      )
+      .unique();
+  },
+});
