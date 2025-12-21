@@ -60,12 +60,14 @@ function KanbanPage() {
       <Authenticated>
         <div className="flex flex-col h-full">
           <div className="px-4 sm:px-6 py-4 sm:py-6 border-b bg-background/50 shrink-0">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Flow</h1>
                 <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Manage your repository workflow in real-time.</p>
               </div>
-              {/* Board actions could go here */}
+              <div className="flex items-center gap-3">
+                {/* Board actions could go here */}
+              </div>
             </div>
           </div>
           <div className="flex-1 min-h-0 p-2 sm:p-4 overflow-hidden">

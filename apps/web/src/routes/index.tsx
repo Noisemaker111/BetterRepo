@@ -177,168 +177,174 @@ function HomeComponent() {
 
   // Authenticated Dashboard
   return (
-    <div className="container mx-auto max-w-[1200px] px-4 py-8 sm:py-12 space-y-8 sm:space-y-12 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2 text-left">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold tracking-tight text-foreground">
-            Dashboard
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground flex items-center gap-2">
-            Welcome back, <span className="text-foreground font-medium">{user.name}</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Button variant="outline" className="flex-1 sm:flex-none rounded-full px-4 sm:px-6 glass hover:bg-white/5 transition-all active:scale-95 text-xs sm:text-sm h-10 sm:h-11">
-            Repositories
-          </Button>
-          <Button className="flex-1 sm:flex-none rounded-full px-4 sm:px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground text-xs sm:text-sm h-10 sm:h-11 font-bold">
-            <Plus className="mr-2 h-4 w-4" />
-            New Issue
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10">
-        <main className="md:col-span-8 space-y-8 sm:space-y-10">
-          <section className="text-left">
-            <div className="mb-4 sm:mb-6 flex items-center justify-between">
-              <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
-                <div className="w-1.5 h-6 bg-primary rounded-full" />
-                Active Issues
-              </h2>
-              <Link to="/issues" className="text-xs sm:text-sm text-primary hover:underline font-medium">
-                View all
-              </Link>
+    <div className="flex-1 flex flex-col min-h-0 bg-background/50 overflow-hidden">
+      <div className="flex flex-col h-full">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b bg-background/50 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1 text-left">
+              <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Dashboard</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+                Welcome back, <span className="text-foreground font-medium">{user.name}</span>
+              </p>
             </div>
-
-            <div className="flex flex-col gap-3 sm:gap-4">
-              {recentIssues === undefined ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-28 sm:h-32 rounded-2xl glass-card animate-pulse" />
-                ))
-              ) : recentIssues.length === 0 ? (
-                <div className="glass-card rounded-2xl p-8 sm:p-12 text-center border-dashed border-border/40">
-                  <div className="inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-muted/20 text-muted-foreground mb-4">
-                    <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
-                  </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">You're all caught up! No active issues.</p>
-                  <Button variant="outline" size="sm" className="rounded-full text-xs">Create one</Button>
-                </div>
-              ) : (
-                recentIssues.map((issue) => (
-                  <Link
-                    key={issue._id}
-                    to="/issues"
-                    className="group flex items-center justify-between p-4 sm:p-5 rounded-xl sm:rounded-2xl glass-card border-border/40 hover:border-primary/40 transition-all hover:translate-x-1"
-                  >
-                    <div className="flex flex-col gap-1 sm:gap-1.5 min-w-0 text-left">
-                      <h3 className="text-sm sm:text-base font-semibold truncate group-hover:text-primary transition-colors text-foreground">
-                        {issue.title}
-                      </h3>
-                      <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                        <span className="font-medium text-primary/70">#{issue._id.slice(-4)}</span>
-                        <span>•</span>
-                        <span>{new Date(issue._creationTime).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                    <Badge variant="secondary" className="rounded-full px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 text-primary border-none text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0">
-                      {issue.status}
-                    </Badge>
-                  </Link>
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="text-left">
-            <div className="mb-4 sm:mb-6 flex items-center justify-between">
-              <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
-                <div className="w-1.5 h-6 bg-purple-500 rounded-full" />
-                Starred Projects
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {starredIssues === undefined ? (
-                Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} className="h-36 sm:h-40 rounded-2xl glass-card animate-pulse" />
-                ))
-              ) : starredIssues.length === 0 ? (
-                <div className="col-span-full glass-card rounded-2xl p-8 text-center bg-muted/5 border-dashed border-border/40">
-                  <Star className="mx-auto mb-3 h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
-                  <p className="text-xs sm:text-sm text-muted-foreground">Star repositories to see updates here.</p>
-                </div>
-              ) : (
-                starredIssues.map((issue) => (
-                  <div key={issue._id} className="glass-card rounded-2xl p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group">
-                    <div className="flex items-center justify-between mb-3 sm:mb-4 text-foreground">
-                      <Badge variant="outline" className="text-[9px] sm:text-[10px] font-bold text-foreground/70 rounded-md">{issue.status}</Badge>
-                      <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500/20 group-hover:fill-yellow-500 transition-all" />
-                    </div>
-                    <h3 className="font-semibold text-xs sm:text-sm mb-2 line-clamp-1 text-foreground text-left">{issue.title}</h3>
-                    <div className="h-1 w-full bg-border/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary/40 w-2/3 group-hover:bg-primary transition-all shadow-[0_0_8px_var(--primary)]" />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-        </main>
-
-        <aside className="md:col-span-4 space-y-6 sm:space-y-8">
-          <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-primary/[0.03] border-primary/10 text-left">
-            <div className="mb-4 sm:mb-6 flex items-center justify-between">
-              <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-primary">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <Button variant="outline" className="flex-1 sm:flex-none rounded-full px-4 sm:px-6 glass hover:bg-white/5 transition-all active:scale-95 text-xs sm:text-sm h-9 sm:h-10">
                 Repositories
-              </h2>
-              <Button variant="ghost" size="icon-xs" className="rounded-full hover:bg-primary/20 h-7 w-7 text-foreground">
-                <Plus className="h-4 w-4 text-primary" />
+              </Button>
+              <Button className="flex-1 sm:flex-none rounded-full px-4 sm:px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground text-xs sm:text-sm h-9 sm:h-10 font-bold">
+                <Plus className="mr-2 h-4 w-4" />
+                New Issue
               </Button>
             </div>
-            <nav className="flex flex-col gap-1.5 sm:gap-2">
-              {recentRepos === undefined ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-10 w-full animate-pulse rounded-xl bg-muted/40" />
-                ))
-              ) : recentRepos.length === 0 ? (
-                <p className="py-4 text-xs sm:text-sm text-muted-foreground text-center">No repos connected.</p>
-              ) : (
-                recentRepos.map((repo) => (
-                  <Link
-                    key={repo._id}
-                    to="/kanban"
-                    className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 group text-foreground"
-                  >
-                    <div className="p-1.5 sm:p-2 rounded-lg bg-background border group-hover:border-primary/40 transition-colors">
-                      <Book className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-                    </div>
-                    <span className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
-                      {repo.name}
-                    </span>
-                  </Link>
-                ))
-              )}
-            </nav>
           </div>
+        </div>
 
-          <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-3 sm:space-y-4 text-left">
-            <div className="flex items-center justify-between text-foreground">
-              <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">System Status</h2>
-              <div className={cn(
-                "h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full",
-                healthCheck === "OK" ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" : "bg-red-500"
-              )} />
-            </div>
-            <div className="flex items-center justify-between text-xs sm:text-sm">
-              <span className="text-muted-foreground hover:text-foreground transition-colors">API Latency</span>
-              <span className="font-medium text-foreground">12ms</span>
-            </div>
-            <div className="flex items-center justify-between text-xs sm:text-sm">
-              <span className="text-muted-foreground">Convex Sync</span>
-              <span className="text-green-500 font-medium">Active</span>
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+              <main className="lg:col-span-8 space-y-8 sm:space-y-10">
+                <section className="text-left">
+                  <div className="mb-4 sm:mb-6 flex items-center justify-between">
+                    <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
+                      <div className="w-1.5 h-6 bg-primary rounded-full" />
+                      Active Issues
+                    </h2>
+                    <Link to="/issues" className="text-xs sm:text-sm text-primary hover:underline font-medium">
+                      View all
+                    </Link>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:gap-4">
+                    {recentIssues === undefined ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="h-28 sm:h-32 rounded-2xl glass-card animate-pulse" />
+                      ))
+                    ) : recentIssues.length === 0 ? (
+                      <div className="glass-card rounded-2xl p-8 sm:p-12 text-center border-dashed border-border/40">
+                        <div className="inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-muted/20 text-muted-foreground mb-4">
+                          <Zap className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-4">You're all caught up! No active issues.</p>
+                        <Button variant="outline" size="sm" className="rounded-full text-xs">Create one</Button>
+                      </div>
+                    ) : (
+                      recentIssues.map((issue) => (
+                        <Link
+                          key={issue._id}
+                          to="/issues"
+                          className="group flex items-center justify-between p-4 sm:p-5 rounded-xl sm:rounded-2xl glass-card border-border/40 hover:border-primary/40 transition-all hover:translate-x-1"
+                        >
+                          <div className="flex flex-col gap-1 sm:gap-1.5 min-w-0 text-left">
+                            <h3 className="text-sm sm:text-base font-semibold truncate group-hover:text-primary transition-colors text-foreground">
+                              {issue.title}
+                            </h3>
+                            <div className="flex items-center gap-2 text-[10px] sm:text-xs text-muted-foreground">
+                              <span className="font-medium text-primary/70">#{issue._id.slice(-4)}</span>
+                              <span>•</span>
+                              <span>{new Date(issue._creationTime).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <Badge variant="secondary" className="rounded-full px-2 sm:px-3 py-0.5 sm:py-1 bg-primary/10 text-primary border-none text-[9px] sm:text-[10px] font-bold uppercase tracking-wider shrink-0">
+                            {issue.status}
+                          </Badge>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </section>
+
+                <section className="text-left">
+                  <div className="mb-4 sm:mb-6 flex items-center justify-between">
+                    <h2 className="text-base sm:text-lg font-bold tracking-tight flex items-center gap-2 text-foreground">
+                      <div className="w-1.5 h-6 bg-purple-500 rounded-full" />
+                      Starred Projects
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {starredIssues === undefined ? (
+                      Array.from({ length: 2 }).map((_, i) => (
+                        <div key={i} className="h-36 sm:h-40 rounded-2xl glass-card animate-pulse" />
+                      ))
+                    ) : starredIssues.length === 0 ? (
+                      <div className="col-span-full glass-card rounded-2xl p-8 text-center bg-muted/5 border-dashed border-border/40">
+                        <Star className="mx-auto mb-3 h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground/30" />
+                        <p className="text-xs sm:text-sm text-muted-foreground">Star repositories to see updates here.</p>
+                      </div>
+                    ) : (
+                      starredIssues.map((issue) => (
+                        <div key={issue._id} className="glass-card rounded-2xl p-4 sm:p-5 hover:bg-white/[0.02] transition-colors group">
+                          <div className="flex items-center justify-between mb-3 sm:mb-4 text-foreground">
+                            <Badge variant="outline" className="text-[9px] sm:text-[10px] font-bold text-foreground/70 rounded-md">{issue.status}</Badge>
+                            <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500 fill-yellow-500/20 group-hover:fill-yellow-500 transition-all" />
+                          </div>
+                          <h3 className="font-semibold text-xs sm:text-sm mb-2 line-clamp-1 text-foreground text-left">{issue.title}</h3>
+                          <div className="h-1 w-full bg-border/20 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary/40 w-2/3 group-hover:bg-primary transition-all shadow-[0_0_8px_var(--primary)]" />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </main>
+
+              <aside className="lg:col-span-4 space-y-6 sm:space-y-8">
+                <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-primary/[0.03] border-primary/10 text-left">
+                  <div className="mb-4 sm:mb-6 flex items-center justify-between">
+                    <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-primary">
+                      Repositories
+                    </h2>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/20 h-7 w-7 text-foreground">
+                      <Plus className="h-4 w-4 text-primary" />
+                    </Button>
+                  </div>
+                  <nav className="flex flex-col gap-1.5 sm:gap-2">
+                    {recentRepos === undefined ? (
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-10 w-full animate-pulse rounded-xl bg-muted/40" />
+                      ))
+                    ) : recentRepos.length === 0 ? (
+                      <p className="py-4 text-xs sm:text-sm text-muted-foreground text-center">No repos connected.</p>
+                    ) : (
+                      recentRepos.map((repo) => (
+                        <Link
+                          key={repo._id}
+                          to="/kanban"
+                          className="flex items-center gap-3 p-2.5 sm:p-3 rounded-lg sm:rounded-xl hover:bg-primary/10 transition-all border border-transparent hover:border-primary/20 group text-foreground"
+                        >
+                          <div className="p-1.5 sm:p-2 rounded-lg bg-background border group-hover:border-primary/40 transition-colors">
+                            <Book className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                          </div>
+                          <span className="text-xs sm:text-sm font-semibold truncate group-hover:text-primary transition-colors">
+                            {repo.name}
+                          </span>
+                        </Link>
+                      ))
+                    )}
+                  </nav>
+                </div>
+
+                <div className="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-6 space-y-3 sm:space-y-4 text-left">
+                  <div className="flex items-center justify-between text-foreground">
+                    <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">System Status</h2>
+                    <div className={cn(
+                      "h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full",
+                      healthCheck === "OK" ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)]" : "bg-red-500"
+                    )} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground hover:text-foreground transition-colors">API Latency</span>
+                    <span className="font-medium text-foreground">12ms</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Convex Sync</span>
+                    <span className="text-green-500 font-medium">Active</span>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
-        </aside>
+        </div>
       </div>
     </div>
   );
