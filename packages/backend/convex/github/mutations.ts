@@ -5,6 +5,7 @@
 
 import { v } from "convex/values";
 import { mutation, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { authComponent } from "../auth";
 
 /**
@@ -350,20 +351,34 @@ export const syncPRFromGitHub = internalMutation({
 
 /**
  * Get access token for a user (internal use only)
+ * Checks both custom githubConnections table and Better Auth's account table
  */
 export const getAccessToken = internalMutation({
     args: { userId: v.string() },
-    handler: async (ctx, args) => {
+    returns: v.union(v.string(), v.null()),
+    handler: async (ctx, args): Promise<string | null> => {
+        // First check our custom githubConnections table
         const connection = await ctx.db
             .query("githubConnections")
             .withIndex("by_userId", (q) => q.eq("userId", args.userId))
             .unique();
 
-        if (!connection) return null;
+        if (connection?.accessToken) {
+            // Update last used timestamp
+            await ctx.db.patch(connection._id, { lastUsedAt: Date.now() });
+            return connection.accessToken;
+        }
 
-        // Update last used timestamp
-        await ctx.db.patch(connection._id, { lastUsedAt: Date.now() });
+        // Fallback: Check Better Auth's account table (for linkSocial connections)
+        // The userId in our app might be the Better Auth user ID
+        const betterAuthToken: { accessToken: string; accountId: string } | null = await ctx.runQuery(internal.github.queries.getBetterAuthGitHubToken, {
+            betterAuthUserId: args.userId,
+        });
 
-        return connection.accessToken;
+        if (betterAuthToken?.accessToken) {
+            return betterAuthToken.accessToken;
+        }
+
+        return null;
     },
 });

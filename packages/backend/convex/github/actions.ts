@@ -486,3 +486,205 @@ export const pushToGitHub = internalAction({
         }
     },
 });
+
+/**
+ * Fetch repository view data (contents, branches, README, languages)
+ * Used by the repository index page to display real GitHub data
+ */
+type RepoViewData = {
+    error: string | null;
+    contents: Array<{
+        name: string;
+        path: string;
+        type: "file" | "dir";
+        size: number;
+        sha: string;
+        lastCommit: {
+            message: string;
+            date: string;
+            authorName: string;
+        } | null;
+    }> | null;
+    readme: { content: string; name: string } | null;
+    languages: { [lang: string]: number } | null;
+    branches: Array<{ name: string; isDefault: boolean }> | null;
+    lastCommit: {
+        sha: string;
+        message: string;
+        date: string;
+        authorName: string;
+        authorAvatar: string | null;
+    } | null;
+};
+
+type ContentItem = {
+    name: string;
+    path: string;
+    type: "file" | "dir";
+    size: number;
+    sha: string;
+    lastCommit: {
+        message: string;
+        date: string;
+        authorName: string;
+    } | null;
+};
+
+export const getRepoViewData = action({
+    args: {
+        owner: v.string(),
+        repo: v.string(),
+        path: v.optional(v.string()),
+        ref: v.optional(v.string()),
+    },
+    handler: async (ctx, args): Promise<RepoViewData> => {
+        // Get access token from any authenticated user with GitHub connected
+        // We use internal query to check for connection
+        const connection = await ctx.runQuery(internal.github.queries.getAnyGitHubToken) as { accessToken: string; userId: string } | null;
+
+        if (!connection?.accessToken) {
+            return {
+                error: "No GitHub connection available",
+                contents: null,
+                readme: null,
+                languages: null,
+                branches: null,
+                lastCommit: null,
+            };
+        }
+
+        const accessToken: string = connection.accessToken;
+        const path = args.path ?? "";
+        const ref = args.ref;
+
+        try {
+            // Fetch contents, readme, languages, and branches in parallel
+            const [contentsResult, readmeResult, languagesResult, branchesResult, lastCommitResult] = await Promise.allSettled([
+                githubApi.getRepoContents(accessToken, args.owner, args.repo, path, ref),
+                githubApi.getReadme(accessToken, args.owner, args.repo, ref),
+                githubApi.getLanguages(accessToken, args.owner, args.repo),
+                githubApi.listBranches(accessToken, args.owner, args.repo, { perPage: 30 }),
+                githubApi.getRepoCommits(accessToken, args.owner, args.repo, {
+                    sha: ref,
+                    perPage: 1,
+                }),
+            ]);
+
+            // Process contents - add last commit info for each file/dir
+            let contents: ContentItem[] | null = null;
+
+            if (contentsResult.status === "fulfilled" && Array.isArray(contentsResult.value)) {
+                // Get last commit for each file (limit to first 20 to avoid rate limits)
+                const filesWithCommits: ContentItem[] = await Promise.all(
+                    (contentsResult.value as Array<{ name: string; path: string; type: string; size: number; sha: string }>).slice(0, 30).map(async (item): Promise<ContentItem> => {
+                        let lastCommit: { message: string; date: string; authorName: string } | null = null;
+                        try {
+                            const commit = await githubApi.getFileLastCommit(
+                                accessToken,
+                                args.owner,
+                                args.repo,
+                                item.path,
+                                ref
+                            );
+                            if (commit) {
+                                lastCommit = {
+                                    message: commit.commit.message.split('\n')[0], // First line only
+                                    date: commit.commit.committer.date,
+                                    authorName: commit.commit.author.name,
+                                };
+                            }
+                        } catch {
+                            // Ignore errors for individual files
+                        }
+                        return {
+                            name: item.name,
+                            path: item.path,
+                            type: item.type as "file" | "dir",
+                            size: item.size,
+                            sha: item.sha,
+                            lastCommit,
+                        };
+                    })
+                );
+                // Sort: directories first, then files, both alphabetically
+                contents = filesWithCommits.sort((a: ContentItem, b: ContentItem) => {
+                    if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+                    return a.name.localeCompare(b.name);
+                });
+            }
+
+            // Process README
+            let readme: { content: string; name: string } | null = null;
+            if (readmeResult.status === "fulfilled" && readmeResult.value) {
+                try {
+                    const decodedContent = atob(readmeResult.value.content.replace(/\n/g, ""));
+                    readme = {
+                        content: decodedContent,
+                        name: readmeResult.value.name,
+                    };
+                } catch {
+                    readme = null;
+                }
+            }
+
+            // Process languages
+            let languages: { [lang: string]: number } | null = null;
+            if (languagesResult.status === "fulfilled") {
+                const totalBytes = Object.values(languagesResult.value).reduce((a, b) => a + b, 0);
+                if (totalBytes > 0) {
+                    languages = {};
+                    for (const [lang, bytes] of Object.entries(languagesResult.value)) {
+                        languages[lang] = Math.round((bytes / totalBytes) * 100);
+                    }
+                }
+            }
+
+            // Process branches
+            let branches: Array<{ name: string; isDefault: boolean }> | null = null;
+            if (branchesResult.status === "fulfilled") {
+                branches = branchesResult.value.map((b) => ({
+                    name: b.name,
+                    isDefault: false, // We'll mark default below
+                }));
+            }
+
+            // Process last commit for the repo/path
+            let lastCommit: {
+                sha: string;
+                message: string;
+                date: string;
+                authorName: string;
+                authorAvatar: string | null;
+            } | null = null;
+            if (lastCommitResult.status === "fulfilled" && lastCommitResult.value.length > 0) {
+                const commit = lastCommitResult.value[0];
+                lastCommit = {
+                    sha: commit.sha.substring(0, 7),
+                    message: commit.commit.message.split('\n')[0],
+                    date: commit.commit.committer.date,
+                    authorName: commit.commit.author.name,
+                    authorAvatar: commit.author?.avatar_url ?? null,
+                };
+            }
+
+            return {
+                error: null,
+                contents,
+                readme,
+                languages,
+                branches,
+                lastCommit,
+            };
+        } catch (error) {
+            console.error("Error fetching repo view data:", error);
+            return {
+                error: error instanceof Error ? error.message : "Failed to fetch repository data",
+                contents: null,
+                readme: null,
+                languages: null,
+                branches: null,
+                lastCommit: null,
+            };
+        }
+    },
+});

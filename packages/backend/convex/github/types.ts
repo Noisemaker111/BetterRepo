@@ -182,3 +182,77 @@ export interface GitHubWebhook {
     created_at: string;
     updated_at: string;
 }
+
+// Repository Contents (file/directory entry)
+export interface GitHubContent {
+    name: string;
+    path: string;
+    sha: string;
+    size: number;
+    url: string;
+    html_url: string;
+    git_url: string;
+    download_url: string | null;
+    type: "file" | "dir" | "symlink" | "submodule";
+    // Only present for files when fetching single file
+    content?: string;
+    encoding?: "base64";
+}
+
+// Commit Author/Committer
+export interface GitHubCommitUser {
+    name: string;
+    email: string;
+    date: string;
+}
+
+// Commit object
+export interface GitHubCommit {
+    sha: string;
+    node_id: string;
+    url: string;
+    html_url: string;
+    commit: {
+        author: GitHubCommitUser;
+        committer: GitHubCommitUser;
+        message: string;
+        tree: {
+            sha: string;
+            url: string;
+        };
+    };
+    author: GitHubUser | null;
+    committer: GitHubUser | null;
+    parents: Array<{
+        sha: string;
+        url: string;
+        html_url: string;
+    }>;
+}
+
+// Branch info
+export interface GitHubBranch {
+    name: string;
+    commit: {
+        sha: string;
+        url: string;
+    };
+    protected: boolean;
+}
+
+// README content (decoded)
+export interface GitHubReadme {
+    name: string;
+    path: string;
+    sha: string;
+    size: number;
+    html_url: string;
+    download_url: string;
+    content: string; // Base64 encoded
+    encoding: "base64";
+}
+
+// Languages breakdown
+export interface GitHubLanguages {
+    [language: string]: number; // bytes of code
+}

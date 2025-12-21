@@ -13,7 +13,14 @@ function RepoLayout() {
   const repository = useQuery(api.repositories.queries.getByName, { owner, name: repo });
   const location = useLocation();
 
-  const tabs = [
+  type Tab = {
+    to: string;
+    label: string;
+    icon: typeof Code;
+    exact?: boolean;
+  };
+
+  const tabs: Tab[] = [
     { to: `/${owner}/${repo}`, label: "Code", icon: Code, exact: true },
     { to: `/${owner}/${repo}/issues`, label: "Issues", icon: ListTodo },
     { to: `/${owner}/${repo}/pull-requests`, label: "Changes", icon: GitPullRequest },
@@ -21,7 +28,7 @@ function RepoLayout() {
     { to: `/${owner}/${repo}/actions`, label: "Actions", icon: Activity },
     { to: `/${owner}/${repo}/security`, label: "Security", icon: ShieldCheck },
     { to: `/${owner}/${repo}/settings`, label: "Settings", icon: Settings },
-  ] as const;
+  ];
 
   if (repository === undefined) return null;
   if (repository === null) return (
@@ -52,9 +59,10 @@ function RepoLayout() {
                 : location.pathname.startsWith(to);
 
               return (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 <Link
                   key={to}
-                  to={to}
+                  to={to as any}
                   className={cn(
                     "flex items-center gap-2 px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-all relative border-b-2 border-transparent hover:text-foreground text-muted-foreground whitespace-nowrap group",
                     isActive && "border-primary text-primary"

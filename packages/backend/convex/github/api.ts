@@ -10,6 +10,11 @@ import type {
     GitHubWebhook,
     CreateWebhookRequest,
     GitHubUser,
+    GitHubContent,
+    GitHubCommit,
+    GitHubReadme,
+    GitHubLanguages,
+    GitHubBranch,
 } from "./types";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -262,3 +267,143 @@ export async function listWebhooks(
     );
     return handleResponse<GitHubWebhook[]>(response);
 }
+
+// ============ Repository Contents Endpoints ============
+
+/**
+ * Get contents of a repository directory or file
+ * @param path - Path within repo, empty string for root
+ * @param ref - Branch/tag/commit SHA (optional, defaults to default branch)
+ */
+export async function getRepoContents(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    path: string = "",
+    ref?: string
+): Promise<GitHubContent | GitHubContent[]> {
+    const params = ref ? `?ref=${encodeURIComponent(ref)}` : "";
+    const encodedPath = path ? `/${path.split('/').map(encodeURIComponent).join('/')}` : "";
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents${encodedPath}${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+    return handleResponse<GitHubContent | GitHubContent[]>(response);
+}
+
+/**
+ * Get repository commits
+ * @param options - Filter options for commits
+ */
+export async function getRepoCommits(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    options?: {
+        sha?: string; // Branch name or commit SHA
+        path?: string; // Only commits containing this file path
+        perPage?: number;
+        page?: number;
+    }
+): Promise<GitHubCommit[]> {
+    const params = new URLSearchParams();
+    if (options?.sha) params.set("sha", options.sha);
+    if (options?.path) params.set("path", options.path);
+    params.set("per_page", String(options?.perPage ?? 30));
+    params.set("page", String(options?.page ?? 1));
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits?${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+    return handleResponse<GitHubCommit[]>(response);
+}
+
+/**
+ * Get specific commit for a file to show last commit info
+ */
+export async function getFileLastCommit(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    path: string,
+    ref?: string
+): Promise<GitHubCommit | null> {
+    const params = new URLSearchParams({
+        path,
+        per_page: "1",
+        page: "1",
+    });
+    if (ref) params.set("sha", ref);
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits?${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+    const commits = await handleResponse<GitHubCommit[]>(response);
+    return commits[0] ?? null;
+}
+
+/**
+ * Get repository README
+ * Returns null if no README exists
+ */
+export async function getReadme(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    ref?: string
+): Promise<GitHubReadme | null> {
+    const params = ref ? `?ref=${encodeURIComponent(ref)}` : "";
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/readme${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+
+    if (response.status === 404) {
+        return null;
+    }
+    return handleResponse<GitHubReadme>(response);
+}
+
+/**
+ * Get repository languages breakdown
+ */
+export async function getLanguages(
+    accessToken: string,
+    owner: string,
+    repo: string
+): Promise<GitHubLanguages> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/languages`,
+        { headers: getHeaders(accessToken) }
+    );
+    return handleResponse<GitHubLanguages>(response);
+}
+
+/**
+ * List repository branches
+ */
+export async function listBranches(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    options?: {
+        perPage?: number;
+        page?: number;
+    }
+): Promise<GitHubBranch[]> {
+    const params = new URLSearchParams({
+        per_page: String(options?.perPage ?? 30),
+        page: String(options?.page ?? 1),
+    });
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/branches?${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+    return handleResponse<GitHubBranch[]>(response);
+}
+

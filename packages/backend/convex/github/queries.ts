@@ -5,10 +5,12 @@
 
 import { v } from "convex/values";
 import { query, internalQuery } from "../_generated/server";
+import { components } from "../_generated/api";
 import { authComponent } from "../auth";
 
 /**
  * Get the current user's GitHub connection status
+ * Checks Better Auth's account table for GitHub provider credentials
  */
 export const getConnection = query({
     args: {},
@@ -23,23 +25,47 @@ export const getConnection = query({
 
         const userId = user.userId || user._id.toString();
 
-        const connection = await ctx.db
+        // First check our custom githubConnections table (for backwards compat)
+        const customConnection = await ctx.db
             .query("githubConnections")
             .withIndex("by_userId", (q) => q.eq("userId", userId))
             .unique();
 
-        if (!connection) return null;
+        if (customConnection) {
+            return {
+                _id: customConnection._id,
+                githubUserId: customConnection.githubUserId,
+                githubUsername: customConnection.githubUsername,
+                avatarUrl: customConnection.avatarUrl,
+                connectedAt: customConnection.connectedAt,
+                lastUsedAt: customConnection.lastUsedAt,
+                hasToken: !!customConnection.accessToken,
+            };
+        }
 
-        // Don't expose the access token
-        return {
-            _id: connection._id,
-            githubUserId: connection.githubUserId,
-            githubUsername: connection.githubUsername,
-            avatarUrl: connection.avatarUrl,
-            connectedAt: connection.connectedAt,
-            lastUsedAt: connection.lastUsedAt,
-            hasToken: !!connection.accessToken,
-        };
+        // Check Better Auth's account table for GitHub provider
+        // When linkSocial is used, the token is stored there
+        const githubAccount = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+            model: "account",
+            where: [
+                { field: "userId", value: user._id },
+                { field: "providerId", value: "github" },
+            ],
+        });
+
+        if (githubAccount) {
+            return {
+                _id: null, // No custom connection ID
+                githubUserId: parseInt(githubAccount.accountId, 10) || null,
+                githubUsername: null, // Not stored in Better Auth account table
+                avatarUrl: user.image || null,
+                connectedAt: githubAccount.createdAt ? new Date(githubAccount.createdAt).getTime() : Date.now(),
+                lastUsedAt: githubAccount.updatedAt ? new Date(githubAccount.updatedAt).getTime() : null,
+                hasToken: !!githubAccount.accessToken,
+            };
+        }
+
+        return null;
     },
 });
 
@@ -169,5 +195,85 @@ export const getRepoByGitHubId = internalQuery({
             .query("repositories")
             .withIndex("by_githubId", (q) => q.eq("githubId", args.githubId))
             .unique();
+    },
+});
+
+/**
+ * Get GitHub access token from Better Auth's account table
+ * This is where linkSocial stores the OAuth tokens
+ */
+export const getBetterAuthGitHubToken = internalQuery({
+    args: { betterAuthUserId: v.string() },
+    returns: v.union(
+        v.object({
+            accessToken: v.string(),
+            accountId: v.string(),
+        }),
+        v.null()
+    ),
+    handler: async (ctx, args): Promise<{ accessToken: string; accountId: string } | null> => {
+        const githubAccount = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+            model: "account",
+            where: [
+                { field: "userId", value: args.betterAuthUserId },
+                { field: "providerId", value: "github" },
+            ],
+        });
+
+        if (!githubAccount || !githubAccount.accessToken) {
+            return null;
+        }
+
+        return {
+            accessToken: githubAccount.accessToken as string,
+            accountId: githubAccount.accountId as string,
+        };
+    },
+});
+
+/**
+ * Get a GitHub access token for any authenticated user
+ * Used by getRepoViewData action to fetch repository contents
+ */
+export const getAnyGitHubToken = internalQuery({
+    args: {},
+    returns: v.union(
+        v.object({
+            accessToken: v.string(),
+            userId: v.string(),
+        }),
+        v.null()
+    ),
+    handler: async (ctx): Promise<{ accessToken: string; userId: string } | null> => {
+        // Get any GitHub connection that has a valid token
+        // First check custom githubConnections
+        const customConnection = await ctx.db
+            .query("githubConnections")
+            .filter((q) => q.neq(q.field("accessToken"), null))
+            .first();
+
+        if (customConnection?.accessToken) {
+            return {
+                accessToken: customConnection.accessToken,
+                userId: customConnection.userId,
+            };
+        }
+
+        // Check Better Auth accounts for any GitHub connection
+        const githubAccount = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+            model: "account",
+            where: [
+                { field: "providerId", value: "github" },
+            ],
+        });
+
+        if (githubAccount?.accessToken) {
+            return {
+                accessToken: githubAccount.accessToken as string,
+                userId: githubAccount.userId as string,
+            };
+        }
+
+        return null;
     },
 });
