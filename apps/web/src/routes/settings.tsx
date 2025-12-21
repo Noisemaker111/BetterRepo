@@ -211,18 +211,24 @@ function SettingsPage() {
                 <CardContent className="space-y-6">
                   <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="relative group">
-                      <div
-                        className={cn(
-                          "w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-primary/50 transition-all bg-muted cursor-pointer relative",
-                          isUploadingImage && "opacity-50"
-                        )}
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <img
-                          src={image || "https://avatar.vercel.sh/user"}
-                          alt={name}
-                          className="w-full h-full object-cover"
-                        />
+                        <div
+                          className={cn(
+                            "w-24 h-24 rounded-2xl overflow-hidden border-2 border-white/10 group-hover:border-primary/50 transition-all bg-muted cursor-pointer relative",
+                            isUploadingImage && "opacity-50"
+                          )}
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <User className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          )}
                         {isUploadingImage && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                             <Loader2 className="w-6 h-6 animate-spin text-white" />

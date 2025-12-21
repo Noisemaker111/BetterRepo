@@ -28,11 +28,17 @@ export default function UserMenu() {
             variant="ghost"
             className="relative h-10 w-10 rounded-full p-0 overflow-hidden border border-white/10 hover:border-primary/50 transition-colors"
           >
-            <img
-              src={user?.image || "https://avatar.vercel.sh/user"}
-              alt={user?.name}
-              className="h-full w-full object-cover"
-            />
+            {user?.image ? (
+              <img
+                src={user.image}
+                alt={user.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="h-full w-full flex items-center justify-center bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+            )}
           </Button>
         }
       />

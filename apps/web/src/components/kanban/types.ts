@@ -4,7 +4,7 @@ export interface KanbanItem {
   id: string;
   title: string;
   status: ColumnId;
-  author: string;
+  author?: { name: string; image?: string } | null;
   labels: { name: string; color: string }[];
   type: "issue" | "pr";
 }

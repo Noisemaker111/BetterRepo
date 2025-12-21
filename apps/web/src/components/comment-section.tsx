@@ -64,7 +64,7 @@ export function CommentSection({ issueId, prId, userId }: CommentSectionProps) {
                   <User size={12} />
                 </div>
                 <div className="space-y-1">
-                  <div className="font-medium text-xs">User • {new Date(c._creationTime).toLocaleDateString()}</div>
+                  <div className="font-medium text-xs">Unknown • {new Date(c._creationTime).toLocaleDateString()}</div>
                   <div>{c.body}</div>
                 </div>
               </CardContent>

@@ -114,9 +114,9 @@ function PullRequestsPage() {
                             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-muted-foreground">
                               <div className="flex items-center gap-1.5">
                                 <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 flex items-center justify-center text-[10px] font-bold text-foreground">
-                                  U
+                                  ?
                                 </div>
-                                <span className="font-medium text-foreground/80">User</span>
+                                <span className="font-medium text-foreground/80">Unknown</span>
                               </div>
                               <div className="flex items-center gap-1.5 hidden xs:flex">
                                 <Clock className="h-3.5 w-3.5 text-primary/40" />
@@ -138,27 +138,7 @@ function PullRequestsPage() {
                   <div className="glass-card rounded-2xl sm:rounded-3xl p-6 sm:p-8 bg-purple-500/[0.03] border-purple-500/10 text-left space-y-5 sm:space-y-6">
                     <div className="space-y-2">
                       <h3 className="text-base sm:text-lg font-bold text-foreground">Review Insights</h3>
-                      <p className="text-[11px] sm:text-xs text-muted-foreground">Your average time-to-merge is <span className="text-purple-400 font-bold">2.4 hours</span>.</p>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                          <span>Review Coverage</span>
-                          <span>84%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-500 w-[84%] shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                          <span>Merge Velocity</span>
-                          <span>High</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-green-500 w-[92%] shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                        </div>
-                      </div>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground">Your review metrics will appear here once you have some merged PRs.</p>
                     </div>
                     <Button variant="outline" className="w-full rounded-xl glass border-purple-500/20 hover:bg-purple-500/5 text-purple-400 text-[10px] sm:text-xs font-bold h-9">
                       View Full Report
@@ -168,15 +148,9 @@ function PullRequestsPage() {
                   <div className="glass-card rounded-xl sm:rounded-2xl p-5 sm:p-6 border-border/40 text-left space-y-4">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pinned Repos</h4>
                     <div className="space-y-3">
-                      {['BetterRepo', 'Cortex-UI'].map(repo => (
-                        <div key={repo} className="flex items-center justify-between group cursor-pointer">
-                          <div className="flex items-center gap-2">
-                            <GitBranch className="h-3.5 w-3.5 text-primary/60" />
-                            <span className="text-xs sm:text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{repo}</span>
-                          </div>
-                          <Badge className="bg-primary/5 text-primary border-none text-[8px] rounded-sm">ACTIVE</Badge>
-                        </div>
-                      ))}
+                      <div className="text-xs sm:text-sm text-muted-foreground text-center py-4">
+                        No pinned repositories yet.
+                      </div>
                     </div>
                   </div>
                 </aside>

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { Navigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Github, Zap, Shield, GitBranch } from "lucide-react";
+import { Github, Zap, Shield } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 
@@ -51,13 +51,6 @@ function AuthLayout() {
 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col justify-between p-12 text-white">
-                    {/* Logo */}
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <GitBranch className="w-5 h-5" />
-                        </div>
-                        <span className="text-2xl font-display font-bold">BetterRepo</span>
-                    </div>
 
                     {/* Main Content */}
                     <div className="space-y-8">
@@ -113,13 +106,6 @@ function AuthLayout() {
             {/* Right Panel - Auth Form */}
             <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24 bg-background">
                 <div className="mx-auto w-full max-w-sm lg:max-w-md">
-                    {/* Mobile Logo */}
-                    <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-                        <div className="w-10 h-10 rounded-xl premium-gradient flex items-center justify-center">
-                            <GitBranch className="w-5 h-5 text-white" />
-                        </div>
-                        <span className="text-2xl font-display font-bold">BetterRepo</span>
-                    </div>
 
                     {/* Form Header */}
                     <div className="text-center lg:text-left mb-10">

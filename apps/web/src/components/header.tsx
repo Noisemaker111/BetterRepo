@@ -11,8 +11,8 @@ export default function Header() {
   const user = useQuery(api.auth.getCurrentUser);
   const params = useParams({ strict: false }) as { owner?: string; repo?: string };
 
-  const owner = params.owner || user?.name?.toLowerCase().replace(/\s+/g, '-') || "author";
-  const repo = params.repo || "BetterRepo";
+  // Only show breadcrumb if we're on a repo page
+  const isRepoPage = params.owner && params.repo;
 
   return (
     <header className="sticky top-0 z-50 w-full glass border-b">
@@ -27,21 +27,23 @@ export default function Header() {
             </span>
           </Link>
 
-          {/* Breadcrumb Navigation */}
-          <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
-            <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
-            <span className="text-muted-foreground px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
-              {owner}
-            </span>
-            <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
-            <Link
-              to="/$owner/$repo"
-              params={{ owner, repo }}
-              className="text-foreground font-bold hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[120px] sm:max-w-none"
-            >
-              {repo}
-            </Link>
-          </div>
+          {/* Breadcrumb Navigation - only show on repo pages */}
+          {isRepoPage && (
+            <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
+              <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
+              <span className="text-muted-foreground px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
+                {params.owner}
+              </span>
+              <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
+              <Link
+                to="/$owner/$repo"
+                params={{ owner: params.owner!, repo: params.repo! }}
+                className="text-foreground font-bold hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[120px] sm:max-w-none"
+              >
+                {params.repo}
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">

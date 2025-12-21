@@ -62,3 +62,30 @@ export const getByName = query({
       .unique();
   },
 });
+
+export const getByNameWithStats = query({
+  args: {
+    owner: v.string(),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const repo = await ctx.db
+      .query("repositories")
+      .withIndex("by_owner_name", (q) =>
+        q.eq("owner", args.owner).eq("name", args.name)
+      )
+      .unique();
+
+    if (!repo) return null;
+
+    const stars = await ctx.db
+      .query("stars")
+      .withIndex("by_repositoryId", (q) => q.eq("repositoryId", repo._id))
+      .collect();
+
+    return {
+      ...repo,
+      starCount: stars.length,
+    };
+  },
+});

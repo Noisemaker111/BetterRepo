@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
-import { Book, FileCode, GitBranch, Star, Eye, File, Loader2, AlertCircle, ChevronDown } from "lucide-react";
+import { Book, FileCode, GitBranch, Star, File, Loader2, AlertCircle, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
@@ -63,7 +63,7 @@ function formatDate(dateString: string): string {
 
 function RepoIndex() {
   const { owner, repo: repoName } = Route.useParams();
-  const repository = useQuery(api.repositories.queries.getByName, { owner, name: repoName });
+  const repository = useQuery(api.repositories.queries.getByNameWithStats, { owner, name: repoName });
   const recordVisit = useMutation(api.repositories.mutations.recordVisit);
   const getRepoViewData = useAction(api.github.actions.getRepoViewData);
 
@@ -133,14 +133,6 @@ function RepoIndex() {
                 <Badge variant="outline" className="rounded-full px-3 py-1 bg-primary/5 text-primary border-primary/20 font-bold text-[10px] uppercase tracking-widest">
                   {repository.isPublic ? "Public" : "Private"}
                 </Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="rounded-full glass border-white/5 h-8 text-[10px] font-bold uppercase tracking-wider">
-                  <Star className="w-3 h-3 mr-1.5 text-yellow-500" /> Star
-                </Button>
-                <Button variant="outline" size="sm" className="rounded-full glass border-white/5 h-8 text-[10px] font-bold uppercase tracking-wider">
-                  <Eye className="w-3 h-3 mr-1.5 text-primary" /> Watch
-                </Button>
               </div>
             </div>
 
@@ -239,6 +231,9 @@ function RepoIndex() {
               <p className="text-sm text-muted-foreground">
                 {repository.description || "No description provided."}
               </p>
+              <Button variant="outline" size="sm" className="rounded-full glass border-white/5 h-8 text-[10px] font-bold uppercase tracking-wider">
+                <Star className="w-3 h-3 mr-1.5 text-yellow-500" /> {repository.starCount || 0}
+              </Button>
               {repository.githubUrl && (
                 <a
                   href={repository.githubUrl}

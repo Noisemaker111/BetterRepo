@@ -79,14 +79,22 @@ export function ItemCard({ item, isDragging }: ItemCardProps) {
           </div>
         )}
         <div className="flex items-center justify-between gap-2 border-t border-border/20 pt-3">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
-              {item.author[0].toUpperCase()}
+          {item.author ? (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+                {item.author.image ? (
+                  <img src={item.author.image} alt={item.author.name} className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  item.author.name[0].toUpperCase()
+                )}
+              </div>
+              <span className="text-[11px] font-medium text-muted-foreground truncate">
+                {item.author.name}
+              </span>
             </div>
-            <span className="text-[11px] font-medium text-muted-foreground truncate">
-              {item.author}
-            </span>
-          </div>
+          ) : (
+            <div />
+          )}
           <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap">
             #{item.id.slice(-4)}
           </span>

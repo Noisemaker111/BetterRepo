@@ -115,18 +115,18 @@ function PullRequestsPage() {
                           </div>
                         </CardHeader>
                         <CardFooter className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 border-t border-white/5 mt-2 pt-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 flex items-center justify-center text-[10px] font-bold text-foreground">
-                                U
+                            <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-muted-foreground">
+                              <div className="flex items-center gap-1.5">
+                                <div className="h-5 w-5 rounded-full bg-gradient-to-tr from-primary/20 to-purple-500/20 flex items-center justify-center text-[10px] font-bold text-foreground">
+                                  ?
+                                </div>
+                                <span className="font-medium text-foreground/80">Unknown</span>
                               </div>
-                              <span className="font-medium text-foreground/80">User</span>
+                              <div className="flex items-center gap-1.5 hidden xs:flex">
+                                <Clock className="h-3.5 w-3.5 text-primary/40" />
+                                {new Date(pr._creationTime).toLocaleDateString()}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1.5 hidden xs:flex">
-                              <Clock className="h-3.5 w-3.5 text-primary/40" />
-                              {new Date(pr._creationTime).toLocaleDateString()}
-                            </div>
-                          </div>
                           <div className="flex items-center gap-2">
                             <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500 animate-pulse" />
                             <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-green-500/80">Checks Passed</span>

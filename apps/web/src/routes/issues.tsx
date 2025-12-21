@@ -149,8 +149,8 @@ function IssuesRoute() {
                           <CardFooter className="px-4 sm:px-6 pb-4 sm:pb-6 pt-0 flex items-center justify-between">
                             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-muted-foreground">
                               <div className="flex items-center gap-1.5 font-medium">
-                                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">U</div>
-                                <span className="text-foreground/80">User</span>
+                                <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">?</div>
+                                <span className="text-foreground/80">Unknown</span>
                               </div>
                               <div className="flex items-center gap-1.5">
                                 <History className="h-3.5 w-3.5" />
@@ -160,7 +160,7 @@ function IssuesRoute() {
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
                                 <MessageSquare className="h-3.5 w-3.5 text-primary/40" />
-                                2
+                                --
                               </div>
                             </div>
                           </CardFooter>
