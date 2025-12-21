@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState, useCallback } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
-import { Book, FileCode, GitBranch, Star, File, Loader2, AlertCircle, ChevronDown } from "lucide-react";
+import type { Id } from "@BetterRepo/backend/convex/_generated/dataModel";
+import { Book, FileCode, GitBranch, Star, File, Loader2, AlertCircle, ChevronDown, ChevronRight, Folder, MoreVertical, Download, Copy, ExternalLink, X, FileText, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 export const Route = createFileRoute("/$owner/$repo/")({
   component: RepoIndex,
@@ -61,23 +67,69 @@ function formatDate(dateString: string): string {
   return `${diffMonths} month${diffMonths === 1 ? "" : "s"} ago`;
 }
 
+function getLanguageFromFilename(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  const languageMap: Record<string, string> = {
+    ts: "typescript",
+    tsx: "typescript",
+    js: "javascript",
+    jsx: "javascript",
+    py: "python",
+    java: "java",
+    go: "go",
+    rs: "rust",
+    rb: "ruby",
+    php: "php",
+    cpp: "cpp",
+    c: "c",
+    cs: "csharp",
+    swift: "swift",
+    kt: "kotlin",
+    scala: "scala",
+    html: "html",
+    css: "css",
+    scss: "scss",
+    vue: "vue",
+    svelte: "svelte",
+    sh: "bash",
+    bash: "bash",
+    json: "json",
+    xml: "xml",
+    yaml: "yaml",
+    yml: "yaml",
+    md: "markdown",
+    markdown: "markdown",
+    sql: "sql",
+    dockerfile: "dockerfile",
+  };
+  return languageMap[ext] || "";
+}
+
+interface FileItem {
+  name: string;
+  path: string;
+  type: "file" | "dir";
+  size: number;
+  sha: string;
+  lastCommit: { message: string; date: string; authorName: string } | null;
+}
+
 function RepoIndex() {
   const { owner, repo: repoName } = Route.useParams();
+  const navigate = useNavigate();
   const repository = useQuery(api.repositories.queries.getByNameWithStats, { owner, name: repoName });
   const recordVisit = useMutation(api.repositories.mutations.recordVisit);
   const getRepoViewData = useAction(api.github.actions.getRepoViewData);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPath, setCurrentPath] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [repoData, setRepoData] = useState<{
     error: string | null;
-    contents: Array<{
-      name: string;
-      path: string;
-      type: "file" | "dir";
-      size: number;
-      sha: string;
-      lastCommit: { message: string; date: string; authorName: string } | null;
-    }> | null;
+    contents: FileItem[] | null;
     readme: { content: string; name: string } | null;
     languages: { [lang: string]: number } | null;
     branches: Array<{ name: string; isDefault: boolean }> | null;
@@ -90,34 +142,93 @@ function RepoIndex() {
     } | null;
   } | null>(null);
 
+  const pathParts = currentPath ? currentPath.split("/") : [];
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getRepoViewData({ owner, repo: repoName, path: currentPath || undefined, ref: selectedBranch || undefined });
+      setRepoData(data as typeof repoData);
+      if (data.branches && data.branches.length > 0 && !selectedBranch) {
+        const defaultBranch = data.branches.find(b => b.isDefault);
+        setSelectedBranch(defaultBranch?.name || data.branches[0].name);
+      }
+    } catch (err) {
+      console.error("Failed to fetch repo data:", err);
+      setRepoData({
+        error: err instanceof Error ? err.message : "Failed to fetch repository data",
+        contents: null,
+        readme: null,
+        languages: null,
+        branches: null,
+        lastCommit: null,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [owner, repoName, currentPath, selectedBranch, getRepoViewData]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   useEffect(() => {
     if (repository?._id) {
       recordVisit({ repositoryId: repository._id });
     }
   }, [repository?._id, recordVisit]);
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      try {
-        const data = await getRepoViewData({ owner, repo: repoName });
-        setRepoData(data);
-      } catch (err) {
-        console.error("Failed to fetch repo data:", err);
-        setRepoData({
-          error: err instanceof Error ? err.message : "Failed to fetch repository data",
-          contents: null,
-          readme: null,
-          languages: null,
-          branches: null,
-          lastCommit: null,
-        });
-      } finally {
-        setIsLoading(false);
-      }
+  const handleFolderClick = (folderName: string, folderPath: string) => {
+    setCurrentPath(folderPath);
+  };
+
+  const handleBreadcrumbClick = (index: number) => {
+    if (index === -1) {
+      setCurrentPath("");
+    } else {
+      setCurrentPath(pathParts.slice(0, index + 1).join("/"));
     }
-    fetchData();
-  }, [owner, repoName, getRepoViewData]);
+  };
+
+  const handleFileClick = async (file: FileItem) => {
+    setSelectedFile(file);
+    setIsLoadingFile(true);
+    setFileContent(null);
+
+    try {
+      const data = await getRepoViewData({ owner, repo: repoName, path: file.path });
+      if (data && data.content) {
+        setFileContent(data.content);
+      } else {
+        setFileContent(null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch file content:", err);
+      setFileContent(null);
+    } finally {
+      setIsLoadingFile(false);
+    }
+  };
+
+  const handleCopyPath = (path: string) => {
+    navigator.clipboard.writeText(path);
+  };
+
+  const handleDownload = (file: FileItem) => {
+    if (fileContent) {
+      const blob = new Blob([fileContent], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleViewOnGitHub = (file: FileItem) => {
+    window.open(`${repository?.githubUrl}/blob/${repository?.githubDefaultBranch ?? "main"}/${file.path}`, "_blank");
+  };
 
   if (repository === undefined) return null;
   if (!repository) return <div className="p-8 text-center text-muted-foreground">Repository not found</div>;
@@ -136,15 +247,65 @@ function RepoIndex() {
               </div>
             </div>
 
+            {/* Breadcrumb */}
+            {currentPath && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                <button onClick={() => handleBreadcrumbClick(-1)} className="hover:text-foreground transition-colors flex items-center gap-1">
+                  <Folder className="w-4 h-4" />
+                  <span className="font-medium">{repoName}</span>
+                </button>
+                {pathParts.map((part, index) => (
+                  <div key={part} className="flex items-center gap-1">
+                    <ChevronRight className="w-3 h-3" />
+                    <button
+                      onClick={() => handleBreadcrumbClick(index)}
+                      className={`hover:text-foreground transition-colors ${index === pathParts.length - 1 ? "text-foreground font-medium" : ""}`}
+                    >
+                      {part}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Search Bar */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search code..."
+                className="pl-10 rounded-lg glass border-white/5 bg-white/5 h-9"
+              />
+            </div>
+
             {/* File List */}
             <div className="glass-card rounded-2xl border-white/5 overflow-hidden">
               <div className="px-4 py-3 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                   <GitBranch className="w-3.5 h-3.5" />
-                  <button className="flex items-center gap-1 hover:text-foreground transition-colors">
-                    <span>{repository.githubDefaultBranch ?? "main"}</span>
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
+                  <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    <GitBranch className="w-3.5 h-3.5" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <button className="flex items-center gap-1 hover:text-foreground transition-colors">
+                          <span>{selectedBranch || (repository.githubDefaultBranch ?? "main")}</span>
+                          <ChevronDown className="w-3 h-3" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-auto">
+                        {repoData?.branches?.map((branch) => (
+                          <DropdownMenuItem
+                            key={branch.name}
+                            onClick={() => setSelectedBranch(branch.name)}
+                            className="cursor-pointer"
+                          >
+                            <GitBranch className="w-4 h-4 mr-2" />
+                            {branch.name}
+                            {branch.isDefault && <span className="ml-auto text-[9px] text-muted-foreground">default</span>}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
                 {repoData?.lastCommit && (
                   <div className="text-[10px] text-muted-foreground flex items-center gap-2">
@@ -169,22 +330,49 @@ function RepoIndex() {
               ) : repoData?.contents && repoData.contents.length > 0 ? (
                 <div className="divide-y divide-white/5">
                   {repoData.contents.map((file) => (
-                    <div key={file.sha} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.01] transition-colors cursor-pointer group">
+                    <div
+                      key={file.sha}
+                      className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                      onClick={() => file.type === "dir" ? handleFolderClick(file.name, file.path) : handleFileClick(file)}
+                    >
                       <div className="flex items-center gap-3">
                         {file.type === "dir" ? (
-                          <Book className="w-4 h-4 text-primary/60" />
+                          <Folder className="w-4 h-4 text-primary/60" />
                         ) : (
                           <File className="w-4 h-4 text-muted-foreground/60" />
                         )}
                         <span className="text-sm font-medium group-hover:text-primary transition-colors">{file.name}</span>
                       </div>
-                      <div className="flex items-center gap-8">
+                      <div className="flex items-center gap-4">
                         <span className="hidden md:block text-xs text-muted-foreground/60 truncate max-w-[200px]">
                           {file.lastCommit?.message ?? "—"}
                         </span>
                         <span className="text-xs text-muted-foreground/40 w-[80px] text-right">
                           {file.lastCommit ? formatDate(file.lastCommit.date) : "—"}
                         </span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
+                            <button className="p-1 hover:bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCopyPath(file.path); }}>
+                              <Copy className="w-4 h-4 mr-2" />
+                              Copy path
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleViewOnGitHub(file); }}>
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              View on GitHub
+                            </DropdownMenuItem>
+                            {file.type === "file" && (
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDownload(file); }}>
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}
@@ -203,8 +391,24 @@ function RepoIndex() {
                   <FileCode className="w-4 h-4" />
                   <span className="text-xs font-bold uppercase tracking-widest">{repoData.readme.name}</span>
                 </div>
-                <article className="prose prose-invert max-w-none prose-headings:font-display prose-a:text-primary prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/5">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <article className="prose prose-invert max-w-none prose-headings:font-display prose-a:text-primary prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/5">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code(props) {
+                        const { inline, className, children, ...rest } = props as { inline?: boolean; className?: string; children?: React.ReactNode; [key: string]: unknown };
+                        const match = /language-(\w+)/.exec(className || "");
+                        if (!inline && match) {
+                          return (
+                            <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" customStyle={{ margin: 0, borderRadius: "0.5rem", fontSize: "13px" }} {...rest}>
+                              {String(children).replace(/\n$/, "")}
+                            </SyntaxHighlighter>
+                          );
+                        }
+                        return <code className={className} {...rest}>{children}</code>;
+                      },
+                    }}
+                  >
                     {repoData.readme.content}
                   </ReactMarkdown>
                 </article>
@@ -311,6 +515,67 @@ function RepoIndex() {
           </aside>
         </div>
       </div>
+
+      {/* File Preview Modal */}
+      <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          {selectedFile && (
+            <>
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <h3 className="font-medium">{selectedFile.name}</h3>
+                    <p className="text-xs text-muted-foreground">{selectedFile.path}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => handleCopyPath(selectedFile.path)}>
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy path
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleViewOnGitHub(selectedFile)}>
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    GitHub
+                  </Button>
+                  {fileContent && (
+                    <Button variant="ghost" size="sm" onClick={() => handleDownload(selectedFile)}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Download
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto">
+                {isLoadingFile ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading file content...</span>
+                  </div>
+                ) : fileContent ? (
+                  <SyntaxHighlighter
+                    language={getLanguageFromFilename(selectedFile.name)}
+                    style={vscDarkPlus}
+                    showLineNumbers
+                    customStyle={{
+                      margin: 0,
+                      borderRadius: 0,
+                      background: "transparent",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {fileContent}
+                  </SyntaxHighlighter>
+                ) : (
+                  <div className="flex items-center justify-center py-16 text-muted-foreground">
+                    <span className="text-sm">Unable to load file content</span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

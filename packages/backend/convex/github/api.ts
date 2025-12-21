@@ -407,3 +407,114 @@ export async function listBranches(
     return handleResponse<GitHubBranch[]>(response);
 }
 
+/**
+ * Create a pull request on GitHub
+ */
+export async function createPullRequest(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    data: {
+        title: string;
+        body?: string;
+        head: string;
+        base: string;
+    }
+): Promise<GitHubPullRequest> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls`,
+        {
+            method: "POST",
+            headers: getHeaders(accessToken),
+            body: JSON.stringify(data),
+        }
+    );
+    return handleResponse<GitHubPullRequest>(response);
+}
+
+/**
+ * Search code in a repository
+ */
+export async function searchCode(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    query: string,
+    options?: {
+        perPage?: number;
+        page?: number;
+    }
+): Promise<{ items: Array<{ path: string; sha: string; score: number }>; totalCount: number }> {
+    const params = new URLSearchParams({
+        q: `repo:${owner}/${repo} ${query}`,
+        per_page: String(options?.perPage ?? 30),
+        page: String(options?.page ?? 1),
+    });
+
+    const response = await fetch(
+        `${GITHUB_API_BASE}/search/code?${params}`,
+        { headers: getHeaders(accessToken) }
+    );
+    const data = await handleResponse<{ items: Array<{ path: string; sha: string; score: number }>; total_count: number }>(response);
+    return {
+        items: data.items,
+        totalCount: data.total_count,
+    };
+}
+
+/**
+ * Get commit status (combined status for a commit)
+ */
+export async function getCommitStatus(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    ref: string
+): Promise<{ state: "success" | "failure" | "pending" | "error"; statuses: Array<{ state: string; description: string; context: string }> }> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${ref}/status`,
+        { headers: getHeaders(accessToken) }
+    );
+    const data = await handleResponse<{ state: string; statuses: Array<{ state: string; description: string; context: string }> }>(response);
+    return {
+        state: data.state as "success" | "failure" | "pending" | "error",
+        statuses: data.statuses,
+    };
+}
+
+/**
+ * Get pull request review comments
+ */
+export async function getPullRequestReviews(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    pullNumber: number
+): Promise<Array<{ id: number; state: string; body: string; user: { login: string; avatar_url: string } }>> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`,
+        { headers: getHeaders(accessToken) }
+    );
+    return handleResponse(response);
+}
+
+/**
+ * Get check runs for a commit (GitHub Actions status)
+ */
+export async function getCheckRuns(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    ref: string
+): Promise<{ totalCount: number; checkRuns: Array<{ name: string; status: string; conclusion: string | null }> }> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/commits/${ref}/check-runs`,
+        { headers: getHeaders(accessToken) }
+    );
+    const data = await handleResponse<{ total_count: number; check_runs: Array<{ name: string; status: string; conclusion: string | null }> }>(response);
+    return {
+        totalCount: data.total_count,
+        checkRuns: data.check_runs,
+    };
+}
+

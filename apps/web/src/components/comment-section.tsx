@@ -64,7 +64,13 @@ export function CommentSection({ issueId, prId, userId }: CommentSectionProps) {
                   <User size={12} />
                 </div>
                 <div className="space-y-1">
-                  <div className="font-medium text-xs">Unknown • {new Date(c._creationTime).toLocaleDateString()}</div>
+                  <div className="font-medium text-xs flex items-center gap-2">
+                    <span>User</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="font-mono text-[9px]">{c.authorId.slice(0, 8)}</span>
+                    <span>•</span>
+                    <span>{new Date(c._creationTime).toLocaleDateString()}</span>
+                  </div>
                   <div>{c.body}</div>
                 </div>
               </CardContent>

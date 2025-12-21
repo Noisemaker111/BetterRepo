@@ -7,6 +7,10 @@ export const sendMessage = action({
   args: {
     message: v.string(),
     sessionId: v.optional(v.string()),
+    context: v.optional(v.object({
+      repository: v.string(),
+      currentPath: v.string(),
+    })),
   },
   handler: async (_ctx, args) => {
     if (!OPENCODE_SERVER_URL) {
@@ -21,6 +25,7 @@ export const sendMessage = action({
       body: JSON.stringify({
         message: args.message,
         session_id: args.sessionId,
+        context: args.context,
       }),
     });
 

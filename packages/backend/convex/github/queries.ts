@@ -277,3 +277,16 @@ export const getAnyGitHubToken = internalQuery({
         return null;
     },
 });
+
+/**
+ * Get repository by owner and name
+ */
+export const getRepositoryByName = internalQuery({
+    args: { owner: v.string(), name: v.string() },
+    handler: async (ctx, args) => {
+        return await ctx.db
+            .query("repositories")
+            .withIndex("by_owner_name", (q) => q.eq("owner", args.owner).eq("name", args.name))
+            .unique();
+    },
+});

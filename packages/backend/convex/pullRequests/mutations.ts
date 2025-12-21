@@ -32,3 +32,19 @@ export const updateStatus = mutation({
     await ctx.db.patch(args.id, { status: args.status });
   },
 });
+
+export const patchGitHubInfo = mutation({
+  args: {
+    id: v.id("pullRequests"),
+    githubId: v.number(),
+    githubNodeId: v.string(),
+    githubUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      githubId: args.githubId,
+      githubNodeId: args.githubNodeId,
+      githubUrl: args.githubUrl,
+    });
+  },
+});

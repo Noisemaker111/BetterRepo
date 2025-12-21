@@ -14,8 +14,8 @@ function KanbanPage() {
   const { owner, repo } = Route.useParams();
   const repository = useQuery(api.repositories.queries.getByName, { owner, name: repo });
 
-  const issues = useQuery(api.issues.queries.list, repository ? { repositoryId: repository._id } : "skip");
-  const prs = useQuery(api.pullRequests.queries.list, repository ? { repositoryId: repository._id } : "skip");
+  const issues = useQuery(api.issues.queries.listWithDetails, repository ? { repositoryId: repository._id } : "skip");
+  const prs = useQuery(api.pullRequests.queries.listWithDetails, repository ? { repositoryId: repository._id } : "skip");
 
   const updateIssueStatus = useMutation(api.issues.mutations.updateStatus);
   const updatePRStatus = useMutation(api.pullRequests.mutations.updateStatus);
@@ -44,15 +44,24 @@ function KanbanPage() {
       id: issue._id,
       title: issue.title,
       status: issue.status as ColumnId,
-      author: null,
-      labels: [],
+      author: issue.author ? {
+        name: issue.author.name || issue.author.userId,
+        image: issue.author.image,
+      } : null,
+      labels: (issue.labels || []).map((l: any) => ({
+        name: l.name,
+        color: l.color,
+      })),
       type: "issue" as const,
     })),
     ...(prs || []).map((pr) => ({
       id: pr._id,
       title: pr.title,
-      status: (pr.status === "merged" ? "done" : pr.status === "closed" ? "closed" : "todo") as ColumnId,
-      author: null,
+      status: (pr.status === "merged" ? "done" : pr.status === "closed" ? "closed" : "in_progress") as ColumnId,
+      author: pr.author ? {
+        name: pr.author.name || pr.author.userId,
+        image: pr.author.image,
+      } : null,
       labels: [],
       type: "pr" as const,
     })),

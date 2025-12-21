@@ -5,15 +5,19 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { AuthContainer } from "@/components/auth-container";
-import { cn } from "@/lib/utils";
+import { Filter } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/kanban")({
   component: KanbanPage,
 });
 
 function KanbanPage() {
-  const issues = useQuery(api.issues.queries.list, {});
-  const prs = useQuery(api.pullRequests.queries.list, {});
+  const [selectedRepoId, setSelectedRepoId] = useState<string | null>(null);
+
+  const repositories = useQuery(api.github.queries.listSyncedRepos);
+  const issues = useQuery(api.issues.queries.list, selectedRepoId ? { repositoryId: selectedRepoId as any } : {});
+  const prs = useQuery(api.pullRequests.queries.list, selectedRepoId ? { repositoryId: selectedRepoId as any } : {});
   const updateIssueStatus = useMutation(api.issues.mutations.updateStatus);
   const updatePRStatus = useMutation(api.pullRequests.mutations.updateStatus);
 
@@ -66,7 +70,21 @@ function KanbanPage() {
                 <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Manage your repository workflow in real-time.</p>
               </div>
               <div className="flex items-center gap-3">
-                {/* Board actions could go here */}
+                <div className="relative w-full sm:w-48 group">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                  <select
+                    className="w-full pl-10 pr-8 rounded-full glass border-border/40 focus-visible:ring-primary/20 bg-background/50 h-9 sm:h-10 text-sm appearance-none cursor-pointer"
+                    value={selectedRepoId || ""}
+                    onChange={(e) => setSelectedRepoId(e.target.value || null)}
+                  >
+                    <option value="">All repositories</option>
+                    {repositories?.map((repo) => (
+                      <option key={repo._id} value={repo._id}>
+                        {repo.owner}/{repo.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
           </div>

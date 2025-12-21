@@ -171,3 +171,42 @@ export const listForYou = query({
       .slice(0, 20);
   },
 });
+
+export const listWithDetails = query({
+  args: {
+    repositoryId: v.optional(v.id("repositories")),
+  },
+  handler: async (ctx, args) => {
+    const q = args.repositoryId
+      ? ctx.db.query("issues").withIndex("by_repositoryId", (q) => q.eq("repositoryId", args.repositoryId))
+      : ctx.db.query("issues");
+
+    const issues = await q.collect();
+
+    const authorIds = Array.from(new Set(issues.map(i => i.authorId)));
+    const labelIds = Array.from(new Set(issues.flatMap(i => i.labelIds || [])));
+
+    const authors = await Promise.all(
+      authorIds.map(async (userId) => {
+        const profile = await ctx.db
+          .query("userProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .first();
+        return { userId, ...profile };
+      })
+    );
+
+    const labels = await Promise.all(
+      labelIds.map(async (labelId) => {
+        const label = await ctx.db.get(labelId);
+        return { id: labelId, ...label };
+      })
+    );
+
+    return issues.map(issue => ({
+      ...issue,
+      author: authors.find(a => a.userId === issue.authorId),
+      labels: (issue.labelIds || []).map(lid => labels.find(l => l.id === lid)).filter(Boolean),
+    }));
+  },
+});

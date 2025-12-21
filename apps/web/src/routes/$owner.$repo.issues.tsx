@@ -1,12 +1,14 @@
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useAction } from "convex/react";
-import { Loader2, AlertCircle, Plus, Search, ArrowUpRight, MessageSquare, History } from "lucide-react";
+import { Loader2, AlertCircle, Plus, Search, ArrowUpRight, MessageSquare, History, Github, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { AuthContainer } from "@/components/auth-container";
 import { authClient } from "@/lib/auth-client";
@@ -22,6 +24,7 @@ function IssuesRoute() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [syncToGitHub, setSyncToGitHub] = useState(false);
   const [duplicates, setDuplicates] = useState<any[]>([]);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +33,12 @@ function IssuesRoute() {
   const createIssue = useMutation(api.issues.mutations.create);
   const findDuplicates = useAction(api.issues.actions.findDuplicates);
   const { data: session } = authClient.useSession();
+
+  useEffect(() => {
+    if (repository?.githubId) {
+      setSyncToGitHub(true);
+    }
+  }, [repository?.githubId]);
 
   // Debounced duplicate check
   useEffect(() => {
@@ -229,7 +238,20 @@ function IssuesRoute() {
                         </div>
                       )}
                     </CardContent>
-                    <CardFooter className="pt-2">
+                    <CardFooter className="pt-2 space-y-3">
+                      {repository?.githubId && (
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/5">
+                          <div className="flex items-center gap-2">
+                            <Github className="w-4 h-4 text-primary" />
+                            <Label htmlFor="sync-github" className="text-sm cursor-pointer">Sync to GitHub</Label>
+                          </div>
+                          <Checkbox
+                            id="sync-github"
+                            checked={syncToGitHub}
+                            onCheckedChange={(checked) => setSyncToGitHub(checked === true)}
+                          />
+                        </div>
+                      )}
                       <Button
                         className="w-full rounded-xl h-11 premium-gradient border-none font-bold tracking-tight shadow-md sm:shadow-lg shadow-primary/20 active:scale-95 transition-all text-primary-foreground"
                         disabled={!title || isCreating}

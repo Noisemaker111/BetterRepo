@@ -1,7 +1,7 @@
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useAction } from "convex/react";
-import { Loader2, AlertCircle, Plus, Search, Filter, ArrowUpRight, MessageSquare, History } from "lucide-react";
+import { Loader2, AlertCircle, Plus, Search, Filter, ArrowUpRight, MessageSquare, History, FolderGit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -23,8 +23,10 @@ function IssuesRoute() {
   const [duplicates, setDuplicates] = useState<any[]>([]);
   const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRepoId, setSelectedRepoId] = useState<string | null>(null);
 
-  const issues = useQuery(api.issues.queries.list, {});
+  const repositories = useQuery(api.github.queries.listSyncedRepos);
+  const issues = useQuery(api.issues.queries.list, selectedRepoId ? { repositoryId: selectedRepoId as any } : {});
   const createIssue = useMutation(api.issues.mutations.create);
   const findDuplicates = useAction(api.issues.actions.findDuplicates);
   const { data: session } = authClient.useSession();
@@ -58,6 +60,7 @@ function IssuesRoute() {
         body,
         authorId: session.user.id,
         labelIds: [],
+        repositoryId: selectedRepoId as any,
         status: "backlog",
       });
       setTitle("");
@@ -86,6 +89,21 @@ function IssuesRoute() {
                 <p className="text-xs sm:text-sm text-muted-foreground hidden xs:block">Manage and track your project tasks.</p>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-48 group">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
+                  <select
+                    className="w-full pl-10 pr-8 rounded-full glass border-border/40 focus-visible:ring-primary/20 bg-background/50 h-9 sm:h-10 text-sm appearance-none cursor-pointer"
+                    value={selectedRepoId || ""}
+                    onChange={(e) => setSelectedRepoId(e.target.value || null)}
+                  >
+                    <option value="">All repositories</option>
+                    {repositories?.map((repo) => (
+                      <option key={repo._id} value={repo._id}>
+                        {repo.owner}/{repo.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="relative w-full sm:w-64 group">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
                   <Input

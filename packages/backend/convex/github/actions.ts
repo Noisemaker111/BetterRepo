@@ -5,8 +5,9 @@
 
 import { v } from "convex/values";
 import { action, internalAction } from "../_generated/server";
-import { internal } from "../_generated/api";
+import { internal, api } from "../_generated/api";
 import * as githubApi from "./api";
+import * as pullRequestsMutations from "../pullRequests/mutations";
 
 /**
  * Complete GitHub OAuth flow and save connection
@@ -174,11 +175,17 @@ export const importRepository = action({
             success: true,
         });
 
-        // Return - webhook setup will be done separately by the user
+        // Schedule async cache warming (fire and forget)
+        ctx.scheduler.runAfter(0, api.github.actions.warmRepositoryFileCache, {
+            repositoryId: repositoryId as any,
+            owner,
+            repo: repoName,
+            branch: repo.default_branch,
+        });
+
         return {
             repositoryId: repositoryId as string,
             hasWebhook: false,
-            // Note: User can set up webhook separately via setupWebhookAction 
         };
     },
 });
@@ -515,6 +522,7 @@ type RepoViewData = {
         authorName: string;
         authorAvatar: string | null;
     } | null;
+    content: string | null;
 };
 
 type ContentItem = {
@@ -538,8 +546,6 @@ export const getRepoViewData = action({
         ref: v.optional(v.string()),
     },
     handler: async (ctx, args): Promise<RepoViewData> => {
-        // Get access token from any authenticated user with GitHub connected
-        // We use internal query to check for connection
         const connection = await ctx.runQuery(internal.github.queries.getAnyGitHubToken) as { accessToken: string; userId: string } | null;
 
         if (!connection?.accessToken) {
@@ -550,6 +556,7 @@ export const getRepoViewData = action({
                 languages: null,
                 branches: null,
                 lastCommit: null,
+                content: null,
             };
         }
 
@@ -558,7 +565,91 @@ export const getRepoViewData = action({
         const ref = args.ref;
 
         try {
-            // Fetch contents, readme, languages, and branches in parallel
+            // Check cache for file content first (if path is provided and it's a file)
+            if (path && !path.endsWith("/")) {
+                const repo = await ctx.runQuery(internal.github.queries.getRepositoryByName, {
+                    owner: args.owner,
+                    name: args.repo,
+                });
+
+                if (repo?._id) {
+                    const cachedFile = await ctx.runQuery(internal.repositoryFiles.queries.getCachedFile, {
+                        repositoryId: repo._id,
+                        path,
+                    });
+
+                    if (cachedFile) {
+                        const contentsResult = await githubApi.getRepoContents(accessToken, args.owner, args.repo, path, ref);
+                        
+                        if (!Array.isArray(contentsResult) && contentsResult.sha === cachedFile.sha) {
+                            return {
+                                error: null,
+                                contents: null,
+                                readme: null,
+                                languages: null,
+                                branches: null,
+                                lastCommit: null,
+                                content: cachedFile.content,
+                            };
+                        }
+
+                        if (!Array.isArray(contentsResult) && contentsResult.content) {
+                            const newContent = atob(contentsResult.content.replace(/\n/g, ""));
+                            
+                            // Skip caching files larger than 1MB
+                            if (contentsResult.size <= 1024 * 1024) {
+                                await ctx.runMutation(internal.repositoryFiles.mutations.cacheFileContent, {
+                                    repositoryId: repo._id,
+                                    path,
+                                    sha: contentsResult.sha,
+                                    content: newContent,
+                                    size: contentsResult.size,
+                                    lastSyncedAt: Date.now(),
+                                });
+                            }
+
+                            return {
+                                error: null,
+                                contents: null,
+                                readme: null,
+                                languages: null,
+                                branches: null,
+                                lastCommit: null,
+                                content: newContent,
+                            };
+                        }
+                    } else {
+                        const contentsResult = await githubApi.getRepoContents(accessToken, args.owner, args.repo, path, ref);
+                        
+                        if (!Array.isArray(contentsResult) && contentsResult.content) {
+                            const fileContent = atob(contentsResult.content.replace(/\n/g, ""));
+
+                            // Skip caching files larger than 1MB
+                            if (contentsResult.size <= 1024 * 1024) {
+                                await ctx.runMutation(internal.repositoryFiles.mutations.cacheFileContent, {
+                                    repositoryId: repo._id,
+                                    path,
+                                    sha: contentsResult.sha,
+                                    content: fileContent,
+                                    size: contentsResult.size,
+                                    lastSyncedAt: Date.now(),
+                                });
+                            }
+
+                            return {
+                                error: null,
+                                contents: null,
+                                readme: null,
+                                languages: null,
+                                branches: null,
+                                lastCommit: null,
+                                content: fileContent,
+                            };
+                        }
+                    }
+                }
+            }
+
             const [contentsResult, readmeResult, languagesResult, branchesResult, lastCommitResult] = await Promise.allSettled([
                 githubApi.getRepoContents(accessToken, args.owner, args.repo, path, ref),
                 githubApi.getReadme(accessToken, args.owner, args.repo, ref),
@@ -570,11 +661,9 @@ export const getRepoViewData = action({
                 }),
             ]);
 
-            // Process contents - add last commit info for each file/dir
             let contents: ContentItem[] | null = null;
 
             if (contentsResult.status === "fulfilled" && Array.isArray(contentsResult.value)) {
-                // Get last commit for each file (limit to first 20 to avoid rate limits)
                 const filesWithCommits: ContentItem[] = await Promise.all(
                     (contentsResult.value as Array<{ name: string; path: string; type: string; size: number; sha: string }>).slice(0, 30).map(async (item): Promise<ContentItem> => {
                         let lastCommit: { message: string; date: string; authorName: string } | null = null;
@@ -588,13 +677,12 @@ export const getRepoViewData = action({
                             );
                             if (commit) {
                                 lastCommit = {
-                                    message: commit.commit.message.split('\n')[0], // First line only
+                                    message: commit.commit.message.split('\n')[0],
                                     date: commit.commit.committer.date,
                                     authorName: commit.commit.author.name,
                                 };
                             }
                         } catch {
-                            // Ignore errors for individual files
                         }
                         return {
                             name: item.name,
@@ -606,14 +694,12 @@ export const getRepoViewData = action({
                         };
                     })
                 );
-                // Sort: directories first, then files, both alphabetically
                 contents = filesWithCommits.sort((a: ContentItem, b: ContentItem) => {
                     if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
                     return a.name.localeCompare(b.name);
                 });
             }
 
-            // Process README
             let readme: { content: string; name: string } | null = null;
             if (readmeResult.status === "fulfilled" && readmeResult.value) {
                 try {
@@ -627,7 +713,6 @@ export const getRepoViewData = action({
                 }
             }
 
-            // Process languages
             let languages: { [lang: string]: number } | null = null;
             if (languagesResult.status === "fulfilled") {
                 const totalBytes = Object.values(languagesResult.value).reduce((a, b) => a + b, 0);
@@ -639,16 +724,14 @@ export const getRepoViewData = action({
                 }
             }
 
-            // Process branches
             let branches: Array<{ name: string; isDefault: boolean }> | null = null;
             if (branchesResult.status === "fulfilled") {
                 branches = branchesResult.value.map((b) => ({
                     name: b.name,
-                    isDefault: false, // We'll mark default below
+                    isDefault: false,
                 }));
             }
 
-            // Process last commit for the repo/path
             let lastCommit: {
                 sha: string;
                 message: string;
@@ -674,6 +757,7 @@ export const getRepoViewData = action({
                 languages,
                 branches,
                 lastCommit,
+                content: null,
             };
         } catch (error) {
             console.error("Error fetching repo view data:", error);
@@ -684,7 +768,182 @@ export const getRepoViewData = action({
                 languages: null,
                 branches: null,
                 lastCommit: null,
+                content: null,
             };
         }
     },
 });
+
+export const createPullRequest = action({
+    args: {
+        userId: v.string(),
+        repositoryId: v.id("repositories"),
+        title: v.string(),
+        body: v.optional(v.string()),
+        sourceBranch: v.string(),
+        targetBranch: v.string(),
+    },
+    handler: async (ctx, args): Promise<{ prId: string; githubPrNumber: number | null }> => {
+        const accessToken = await ctx.runMutation(internal.github.mutations.getAccessToken, {
+            userId: args.userId,
+        });
+
+        if (!accessToken) {
+            throw new Error("No GitHub connection found");
+        }
+
+        const repo = await ctx.runQuery(internal.github.queries.getRepoForSync, {
+            repositoryId: args.repositoryId,
+        });
+
+        if (!repo || !repo.githubFullName) {
+            throw new Error("Repository not found or not synced with GitHub");
+        }
+
+        const [owner, repoName] = repo.githubFullName.split("/");
+
+        const prId = await (ctx.runMutation as (fn: unknown, args: unknown) => Promise<unknown>)(pullRequestsMutations.create, {
+            title: args.title,
+            body: args.body || "",
+            authorId: args.userId,
+            sourceBranch: args.sourceBranch,
+            targetBranch: args.targetBranch,
+        });
+
+        let githubPrNumber: number | null = null;
+        try {
+            const githubPr = await githubApi.createPullRequest(accessToken, owner, repoName, {
+                title: args.title,
+                body: args.body,
+                head: args.sourceBranch,
+                base: args.targetBranch,
+            });
+            githubPrNumber = githubPr.number;
+        } catch (error) {
+            console.error("Failed to create PR on GitHub:", error);
+        }
+
+        return {
+            prId: prId as string,
+            githubPrNumber,
+        };
+    },
+});
+
+/**
+ * Warm the file cache for a repository by fetching all files recursively
+ * This is designed to be run as a background action via scheduler
+ */
+export const warmRepositoryFileCache = action({
+    args: {
+        repositoryId: v.id("repositories"),
+        owner: v.string(),
+        repo: v.string(),
+        branch: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const accessToken = await ctx.runMutation(internal.github.mutations.getAccessToken, {
+            userId: "system", // This will fail but we use the connection below
+        }).catch(() => null);
+
+        const connection = await ctx.runQuery(internal.github.queries.getAnyGitHubToken) as { accessToken: string; userId: string } | null;
+        if (!connection?.accessToken) {
+            throw new Error("No GitHub connection available");
+        }
+
+        const ref = args.branch;
+
+        try {
+            const allFiles = await getAllRepoContentsRecursive(
+                connection.accessToken,
+                args.owner,
+                args.repo,
+                "",
+                ref
+            );
+
+            let cached = 0;
+            let skipped = 0;
+
+            for (const file of allFiles) {
+                if (file.size > 1024 * 1024) {
+                    skipped++;
+                    continue;
+                }
+
+                try {
+                    const contentResult = await githubApi.getRepoContents(
+                        connection.accessToken,
+                        args.owner,
+                        args.repo,
+                        file.path,
+                        ref
+                    );
+
+                    if (!Array.isArray(contentResult) && contentResult.content) {
+                        const decodedContent = atob(contentResult.content.replace(/\n/g, ""));
+                        
+                        await ctx.runMutation(internal.repositoryFiles.mutations.cacheFileContent, {
+                            repositoryId: args.repositoryId,
+                            path: file.path,
+                            sha: contentResult.sha,
+                            content: decodedContent,
+                            size: contentResult.size,
+                            lastSyncedAt: Date.now(),
+                        });
+                        cached++;
+                    }
+                } catch (err) {
+                    console.warn(`Failed to cache ${file.path}:`, err);
+                }
+            }
+
+            return { cached, skipped, total: allFiles.length };
+        } catch (error) {
+            console.error("Failed to warm file cache:", error);
+            throw error;
+        }
+    },
+});
+
+/**
+ * Recursively fetch all files from a repository
+ */
+async function getAllRepoContentsRecursive(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    path: string,
+    ref?: string
+): Promise<Array<{ name: string; path: string; size: number; sha: string; type: string }>> {
+    const result: Array<{ name: string; path: string; size: number; sha: string; type: string }> = [];
+    
+    const contents = await githubApi.getRepoContents(accessToken, owner, repo, path, ref);
+    
+    if (Array.isArray(contents)) {
+        for (const item of contents) {
+            if (item.type === "dir") {
+                const subFiles = await getAllRepoContentsRecursive(accessToken, owner, repo, item.path, ref);
+                result.push(...subFiles);
+            } else {
+                result.push({
+                    name: item.name,
+                    path: item.path,
+                    size: item.size,
+                    sha: item.sha,
+                    type: item.type,
+                });
+            }
+        }
+    } else if (contents.type === "file") {
+        result.push({
+            name: contents.name,
+            path: contents.path,
+            size: contents.size,
+            sha: contents.sha,
+            type: contents.type,
+        });
+    }
+
+    return result;
+}

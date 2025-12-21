@@ -104,8 +104,10 @@ export const webhookHandler = httpAction(async (ctx, request) => {
             case "pull_request":
                 await handlePREvent(ctx, repo._id, ownerId, payload as PullRequestWebhookPayload);
                 break;
+            case "push":
+                await handlePushEvent(ctx, repo._id, payload as any);
+                break;
             case "ping":
-                // GitHub sends a ping event when webhook is first created
                 console.log(`Webhook ping received for repo: ${repo._id}`);
                 break;
             default:
@@ -195,5 +197,37 @@ async function handlePREvent(
             targetBranch: pr.base.ref,
             authorId: ownerId,
         });
+    }
+}
+
+/**
+ * Handle push events - invalidate file cache for changed files
+ */
+async function handlePushEvent(
+    ctx: any,
+    repositoryId: any,
+    payload: { commits: Array<{ added: string[]; modified: string[]; removed: string[] }>; sender: { login: string } }
+) {
+    // Collect all changed file paths
+    const changedPaths: string[] = [];
+    
+    for (const commit of payload.commits) {
+        changedPaths.push(...commit.added);
+        changedPaths.push(...commit.modified);
+        changedPaths.push(...commit.removed);
+    }
+
+    // Deduplicate
+    const uniquePaths = [...new Set(changedPaths)];
+
+    if (uniquePaths.length > 0) {
+        // Clear cached files that were changed
+        await ctx.runMutation(internal.repositoryFiles.mutations.invalidateFilesBySha, {
+            repositoryId,
+            changedPaths: uniquePaths,
+            timestamp: Date.now(),
+        });
+        
+        console.log(`Invalidated ${uniquePaths.length} cached files for repo: ${repositoryId}`);
     }
 }

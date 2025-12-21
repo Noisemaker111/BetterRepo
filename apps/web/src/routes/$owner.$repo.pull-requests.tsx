@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { AuthContainer } from "@/components/auth-container";
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GitPullRequest, Plus, Loader2, GitBranch, Search, ArrowUpRight, Clock } from "lucide-react";
-import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { GitPullRequest, Plus, Loader2, GitBranch, Search, ArrowUpRight, Clock, X } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAction } from "convex/react";
+import { api as convexApi } from "@BetterRepo/backend/convex/_generated/api";
 
 export const Route = createFileRoute("/$owner/$repo/pull-requests")({
   component: PullRequestsPage,
@@ -21,11 +25,51 @@ function PullRequestsPage() {
 
   const prs = useQuery(api.pullRequests.queries.list, repository ? { repositoryId: repository._id } : "skip");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [prTitle, setPrTitle] = useState("");
+  const [prBody, setPrBody] = useState("");
+  const [sourceBranch, setSourceBranch] = useState("");
+  const [targetBranch, setTargetBranch] = useState("main");
+  const [error, setError] = useState("");
+
+  const createPullRequest = useAction(convexApi.github.actions.createPullRequest);
+  const createLocalPR = useMutation(api.pullRequests.mutations.create);
 
   const filteredPrs = prs?.filter(pr =>
     pr.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     pr.sourceBranch.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleCreatePR = async () => {
+    if (!prTitle.trim() || !sourceBranch.trim() || !targetBranch.trim()) {
+      setError("Please fill in all required fields");
+      return;
+    }
+    if (!repository) return;
+
+    setIsCreating(true);
+    setError("");
+
+    try {
+      await createLocalPR({
+        title: prTitle,
+        body: prBody,
+        authorId: "current-user",
+        sourceBranch,
+        targetBranch,
+      });
+      setIsCreateModalOpen(false);
+      setPrTitle("");
+      setPrBody("");
+      setSourceBranch("");
+      setTargetBranch("main");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create PR");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   if (!repository) return null;
 
@@ -54,7 +98,7 @@ function PullRequestsPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button className="w-full sm:w-auto rounded-full px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10">
+                <Button className="w-full sm:w-auto rounded-full px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10" onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" /> New PR
                 </Button>
               </div>
@@ -146,6 +190,96 @@ function PullRequestsPage() {
           <AuthContainer />
         </div>
       </Unauthenticated>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitPullRequest className="w-5 h-5" />
+              Create Pull Request
+            </DialogTitle>
+            <DialogDescription>
+              Submit changes from a source branch to a target branch.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {error && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="pr-title">Title *</Label>
+              <Input
+                id="pr-title"
+                placeholder="Pull request title"
+                value={prTitle}
+                onChange={(e) => setPrTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pr-body">Description</Label>
+              <textarea
+                id="pr-body"
+                placeholder="Describe your changes..."
+                value={prBody}
+                onChange={(e) => setPrBody(e.target.value)}
+                className="w-full min-h-[100px] px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="source-branch" className="flex items-center gap-1">
+                  <GitBranch className="w-3 h-3" />
+                  Source *
+                </Label>
+                <Input
+                  id="source-branch"
+                  placeholder="feature-branch"
+                  value={sourceBranch}
+                  onChange={(e) => setSourceBranch(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="target-branch" className="flex items-center gap-1">
+                  <GitBranch className="w-3 h-3" />
+                  Target *
+                </Label>
+                <Input
+                  id="target-branch"
+                  placeholder="main"
+                  value={targetBranch}
+                  onChange={(e) => setTargetBranch(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="premium-gradient border-none" onClick={handleCreatePR} disabled={isCreating}>
+              {isCreating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <GitPullRequest className="w-4 h-4 mr-2" />
+                  Create PR
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

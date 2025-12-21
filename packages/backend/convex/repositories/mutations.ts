@@ -97,3 +97,79 @@ export const recordVisit = mutation({
     });
   },
 });
+
+export const update = mutation({
+  args: {
+    id: v.id("repositories"),
+    name: v.optional(v.string()),
+    description: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let user;
+    try {
+      user = await authComponent.getAuthUser(ctx);
+    } catch (e) {
+      user = null;
+    }
+
+    if (!user) throw new Error("Not authenticated");
+    const userId = user.userId || user._id.toString();
+
+    const repo = await ctx.db.get(args.id);
+    if (!repo) throw new Error("Repository not found");
+    if (repo.ownerId !== userId) throw new Error("Not authorized");
+
+    const updates: Record<string, unknown> = {};
+    if (args.name !== undefined) updates.name = args.name;
+    if (args.description !== undefined) updates.description = args.description;
+
+    await ctx.db.patch(args.id, updates);
+  },
+});
+
+export const updateVisibility = mutation({
+  args: {
+    id: v.id("repositories"),
+    isPublic: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    let user;
+    try {
+      user = await authComponent.getAuthUser(ctx);
+    } catch (e) {
+      user = null;
+    }
+
+    if (!user) throw new Error("Not authenticated");
+    const userId = user.userId || user._id.toString();
+
+    const repo = await ctx.db.get(args.id);
+    if (!repo) throw new Error("Repository not found");
+    if (repo.ownerId !== userId) throw new Error("Not authorized");
+
+    await ctx.db.patch(args.id, { isPublic: args.isPublic });
+  },
+});
+
+export const deleteRepo = mutation({
+  args: {
+    id: v.id("repositories"),
+  },
+  handler: async (ctx, args) => {
+    let user;
+    try {
+      user = await authComponent.getAuthUser(ctx);
+    } catch (e) {
+      user = null;
+    }
+
+    if (!user) throw new Error("Not authenticated");
+    const userId = user.userId || user._id.toString();
+
+    const repo = await ctx.db.get(args.id);
+    if (!repo) throw new Error("Repository not found");
+    if (repo.ownerId !== userId) throw new Error("Not authorized");
+
+    await ctx.db.delete(args.id);
+  },
+});

@@ -25,3 +25,33 @@ export const list = query({
     return await q.collect();
   },
 });
+
+export const listWithDetails = query({
+  args: {
+    repositoryId: v.optional(v.id("repositories")),
+  },
+  handler: async (ctx, args) => {
+    const q = args.repositoryId
+      ? ctx.db.query("pullRequests").withIndex("by_repositoryId", (q) => q.eq("repositoryId", args.repositoryId))
+      : ctx.db.query("pullRequests");
+
+    const prs = await q.collect();
+
+    const authorIds = Array.from(new Set(prs.map(p => p.authorId)));
+
+    const authors = await Promise.all(
+      authorIds.map(async (userId) => {
+        const profile = await ctx.db
+          .query("userProfiles")
+          .withIndex("by_userId", (q) => q.eq("userId", userId))
+          .first();
+        return { userId, ...profile };
+      })
+    );
+
+    return prs.map(pr => ({
+      ...pr,
+      author: authors.find(a => a.userId === pr.authorId),
+    }));
+  },
+});

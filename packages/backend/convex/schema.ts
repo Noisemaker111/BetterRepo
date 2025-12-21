@@ -147,4 +147,15 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_repositoryId", ["repositoryId"])
     .index("by_timestamp", ["timestamp"]),
+
+  // Cached repository file contents for faster viewing
+  repositoryFiles: defineTable({
+    repositoryId: v.id("repositories"),
+    path: v.string(), // Full path within the repo
+    sha: v.string(), // GitHub file SHA for change detection
+    content: v.string(), // File content (decoded)
+    size: v.number(),
+    lastSyncedAt: v.number(),
+  }).index("by_repositoryId", ["repositoryId"])
+    .index("by_repositoryId_path", ["repositoryId", "path"]),
 });
