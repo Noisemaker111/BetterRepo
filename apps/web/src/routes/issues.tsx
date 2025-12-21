@@ -114,7 +114,7 @@ function IssuesRoute() {
                   />
                 </div>
                 <Button
-                  className="w-full sm:w-auto rounded-full px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10"
+                  className="w-full sm:w-auto rounded-full px-6 border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10"
                   onClick={() => (document.getElementById('issue-title') as HTMLInputElement)?.focus()}
                 >
                   <Plus className="mr-2 h-4 w-4" /> New Issue
@@ -244,7 +244,7 @@ function IssuesRoute() {
                     </CardContent>
                     <CardFooter className="pt-2">
                       <Button
-                        className="w-full rounded-xl h-11 premium-gradient border-none font-bold tracking-tight shadow-md sm:shadow-lg shadow-primary/20 active:scale-95 transition-all text-primary-foreground"
+                        className="w-full rounded-xl h-11 border-none font-bold tracking-tight shadow-md sm:shadow-lg shadow-primary/20 active:scale-95 transition-all text-primary-foreground"
                         disabled={!title || isCreating}
                         onClick={handleCreate}
                       >

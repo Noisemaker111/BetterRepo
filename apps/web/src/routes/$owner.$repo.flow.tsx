@@ -70,7 +70,7 @@ function KanbanPage() {
   if (!repository) return null;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-background/50 overflow-hidden">
       <Authenticated>
         <div className="flex flex-col h-full">
           <div className="px-4 sm:px-6 py-4 border-b bg-background/50 shrink-0">

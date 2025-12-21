@@ -68,18 +68,72 @@ export const getCurrentUser = query({
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .unique();
 
+      const githubConnection = await ctx.db
+        .query("githubConnections")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .unique();
+
       if (profile) {
         return {
           ...user,
+          userId,
+          githubUsername: githubConnection?.githubUsername ?? null,
           name: profile.name ?? user.name,
           image: profile.image ?? user.image,
           lastProfileUpdate: profile.lastUpdated,
         };
       }
 
-      return user;
+      return {
+        ...user,
+        userId,
+        githubUsername: githubConnection?.githubUsername ?? null,
+      };
     } catch (e) {
       return null;
     }
+  },
+});
+
+export const getUserByGithubUsername = query({
+  args: { githubUsername: v.string() },
+  returns: v.union(
+    v.object({
+      userId: v.string(),
+      name: v.string(),
+      image: v.string(),
+      githubUsername: v.string(),
+      githubAvatarUrl: v.string(),
+      joinedAt: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async function (ctx, args) {
+    const connection = await ctx.db
+      .query("githubConnections")
+      .withIndex("by_githubUserId", (q) => q)
+      .collect();
+
+    const user = connection.find(
+      (c) => c.githubUsername.toLowerCase() === args.githubUsername.toLowerCase()
+    );
+
+    if (!user) {
+      return null;
+    }
+
+    const profile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_userId", (q) => q.eq("userId", user.userId))
+      .unique();
+
+    return {
+      userId: user.userId,
+      name: profile?.name ?? user.githubUsername,
+      image: profile?.image ?? user.avatarUrl ?? "",
+      githubUsername: user.githubUsername,
+      githubAvatarUrl: user.avatarUrl ?? "",
+      joinedAt: user.connectedAt,
+    };
   },
 });

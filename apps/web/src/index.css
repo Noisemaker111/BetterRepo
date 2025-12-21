@@ -135,10 +135,6 @@
     @apply bg-card/40 backdrop-blur-md border border-border/40 shadow-sm hover:shadow-md transition-all duration-300;
   }
 
-  .premium-gradient {
-    @apply bg-gradient-to-br from-primary via-primary/80 to-purple-500;
-  }
-
   .text-glow {
     text-shadow: 0 0 20px var(--primary);
   }

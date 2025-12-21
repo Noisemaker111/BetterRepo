@@ -89,3 +89,13 @@ export const getByNameWithStats = query({
     };
   },
 });
+
+export const listByUserId = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("repositories")
+      .withIndex("by_ownerId", (q) => q.eq("ownerId", args.userId))
+      .collect();
+  },
+});

@@ -55,3 +55,14 @@ export const listWithDetails = query({
     }));
   },
 });
+
+export const listByAuthor = query({
+  args: { authorId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("pullRequests")
+      .withIndex("by_authorId", (q) => q.eq("authorId", args.authorId))
+      .order("desc")
+      .collect();
+  },
+});

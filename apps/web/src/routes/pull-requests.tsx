@@ -49,7 +49,7 @@ function PullRequestsPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button className="w-full sm:w-auto rounded-full px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10">
+                <Button className="w-full sm:w-auto rounded-full px-6 border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10">
                   <Plus className="mr-2 h-4 w-4" /> New PR
                 </Button>
               </div>

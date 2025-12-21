@@ -34,12 +34,12 @@ function RepoLayout() {
   if (repository === null) return (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
-        <h1 className="text-6xl font-display font-bold mb-4 bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">404</h1>
+        <h1 className="text-6xl font-display font-bold mb-4 text-foreground">404</h1>
         <h2 className="text-xl font-bold mb-2">Repository Not Found</h2>
         <p className="text-muted-foreground mb-6">The repository you're looking for doesn't exist or is private.</p>
         <Link
           to="/"
-          className="inline-flex items-center justify-center rounded-full px-6 py-2 premium-gradient text-primary-foreground font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
+          className="inline-flex items-center justify-center rounded-full px-6 py-2 text-primary-foreground font-bold transition-all active:scale-95 shadow-lg shadow-primary/20"
         >
           Back to Dashboard
         </Link>

@@ -98,7 +98,7 @@ function PullRequestsPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Button className="w-full sm:w-auto rounded-full px-6 premium-gradient border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10" onClick={() => setIsCreateModalOpen(true)}>
+                <Button className="w-full sm:w-auto rounded-full px-6 border-none shadow-lg shadow-primary/20 transition-all active:scale-95 text-primary-foreground font-bold h-9 sm:h-10" onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" /> New PR
                 </Button>
               </div>
@@ -264,7 +264,7 @@ function PullRequestsPage() {
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="premium-gradient border-none" onClick={handleCreatePR} disabled={isCreating}>
+            <Button className="border-none" onClick={handleCreatePR} disabled={isCreating}>
               {isCreating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

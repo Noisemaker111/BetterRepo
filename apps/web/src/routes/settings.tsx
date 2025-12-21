@@ -296,7 +296,7 @@ function SettingsPage() {
                   <Button
                     onClick={handleUpdateProfile}
                     disabled={isUpdating}
-                    className="premium-gradient border-none rounded-full px-6"
+                    className="border-none rounded-full px-6"
                   >
                     {isUpdating ? (
                       <>

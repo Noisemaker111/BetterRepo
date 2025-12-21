@@ -4,8 +4,9 @@ import { FcTreeStructure } from "react-icons/fc";
 import { useQuery } from "convex/react";
 import { api } from "@BetterRepo/backend/convex/_generated/api";
 import UserMenu from "./user-menu";
-import { buttonVariants } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { Github } from "lucide-react";
 
 export default function Header() {
   const user = useQuery(api.auth.getCurrentUser);
@@ -28,12 +29,16 @@ export default function Header() {
           </Link>
 
           {/* Breadcrumb Navigation - only show on repo pages */}
-          {isRepoPage && (
+          {isRepoPage ? (
             <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
               <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
-              <span className="text-muted-foreground px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
+              <Link
+                to="/$owner"
+                params={{ owner: params.owner! }}
+                className="text-foreground hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none"
+              >
                 {params.owner}
-              </span>
+              </Link>
               <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
               <Link
                 to="/$owner/$repo"
@@ -43,13 +48,28 @@ export default function Header() {
                 {params.repo}
               </Link>
             </div>
-          )}
+          ) : params.owner ? (
+            <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
+              <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
+              <span className="text-foreground font-bold px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
+                {params.owner}
+              </span>
+            </div>
+          ) : null}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="h-6 w-px bg-border/40 mx-0.5 sm:mx-1 hidden xs:block" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <a
+              href="https://github.com/JK-101/BetterRepo"
+              target="_blank"
+              rel="noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+            <div className="h-6 w-px bg-border/40 mx-0.5 sm:mx-1 hidden xs:block" />
 
-          <ModeToggle />
+            <ModeToggle />
 
           {user === undefined ? (
             <div className="w-8 h-8 rounded-full bg-muted/20 animate-pulse" />
@@ -60,7 +80,7 @@ export default function Header() {
               to="/auth"
               className={cn(
                 buttonVariants({ variant: "default", size: "sm" }),
-                "rounded-full px-4 sm:px-6 premium-gradient border-none hover:opacity-90 transition-opacity font-bold text-xs h-9 sm:h-10 shrink-0"
+                "rounded-full px-3 sm:px-4 border-none hover:opacity-90 transition-opacity font-medium text-xs h-7 sm:h-8 shrink-0"
               )}
             >
               Sign In
