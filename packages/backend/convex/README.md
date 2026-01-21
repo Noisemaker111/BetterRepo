@@ -1,5 +1,7 @@
 # Welcome to your Convex functions directory!
 
+> **Contributions Welcome!** You are heavily encouraged to push changes or fixes. Almost all PRs and commits will be accepted after review. Feel free to submit your improvements!
+
 Write your Convex functions here.
 See https://docs.convex.dev/functions for more.
 

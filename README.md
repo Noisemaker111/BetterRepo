@@ -1,5 +1,9 @@
 # BetterRepo
 
+> **Contributions Welcome!** You are heavily encouraged to push changes or fixes. Almost all PRs and commits will be accepted after review. Feel free to submit your improvements!
+
+**GitHub:** [https://github.com/JK-101/BetterRepo](https://github.com/JK-101/BetterRepo)
+
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Router, Convex, and more.
 
 ## Features

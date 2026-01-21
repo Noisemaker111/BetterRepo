@@ -1,6 +1,7 @@
 {
   "name": "BetterRepo",
   "private": true,
+  "repository": "github:JK-101/BetterRepo",
   "workspaces": {
     "packages": [
       "apps/*",
