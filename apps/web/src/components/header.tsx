@@ -60,7 +60,7 @@ export default function Header() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             <a
-              href="https://github.com/JK-101/BetterRepo"
+              href="https://github.com/Noisemaker111/BetterRepo"
               target="_blank"
               rel="noreferrer"
               className="text-muted-foreground hover:text-foreground transition-colors"
