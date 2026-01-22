@@ -117,7 +117,7 @@ export class VirtualRepo {
   }
 
   async readFile(path: string): Promise<string> {
-    const normalized = path.replace(/^\/+/, "");
+    const normalized = normalizePath(path);
     const tree = await this.getFullTree();
     const entry = tree.find((e) => e.path === normalized && e.type === "blob");
 
