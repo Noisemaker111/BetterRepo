@@ -1,0 +1,28 @@
+{
+  "name": "@BetterRepo/virtual-repo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check-types": "tsc --noEmit",
+    "smoke": "node examples/smoke.mjs"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2"
+  },
+  "devDependencies": {
+    "@BetterRepo/config": "workspace:*",
+    "@types/node": "^24.3.0",
+    "typescript": "catalog:"
+  }
+}

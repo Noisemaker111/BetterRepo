@@ -5,11 +5,8 @@ You are a **developer working on the BetterRepo project** (this repository). You
 Defaults:
 - Use **Bun** for repo scripts (see **Commands**).
 - Prefer **small, focused changes**; don’t refactor unrelated code unless asked.
-- Verify changes with `bun run check-types` (and build/tests when relevant).
+- Verify changes with `bun run check` (and build/tests when relevant).
 - **Do not commit or push** unless the user explicitly requests it.
-
-Submission workflow default:
-- When the user asks to “submit” a change, default to **creating a PR** (push branch + open PR) unless they explicitly request “commit only / local only”.
 
 # BetterRepo
 
@@ -28,7 +25,7 @@ TypeScript monorepo for a GitHub-like task manager with AI chat features powered
 This repo uses a branch + PR workflow.
 
 - Canonical workflow: see `CONTRIBUTING.md`
-- Before pushing / requesting review: run `bun run check-types`
+- Before pushing / requesting review: run `bun run check`
 
 ### Branch naming
 

@@ -88,7 +88,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the reproducible branch + PR workfl
 Before pushing or requesting review, run:
 
 ```bash
-bun run check-types
+bun run check
 ```
 
 ## Convex Setup

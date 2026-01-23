@@ -7,7 +7,7 @@ This project uses a branch + PR workflow, but keeps it lightweight and reproduci
 - Keep changes focused. Don’t mix unrelated edits.
 - Commits should explain the change clearly (future-you should understand them).
 - PRs should be concise and readable (the PR is the “story”; commits are the “steps”).
-- Before pushing or requesting review, run: `bun run check-types`.
+- Before pushing or requesting review, run: `bun run check`.
 
 ## Workflow (reproducible)
 
@@ -69,7 +69,7 @@ If conflicts happen: fix → `git add -A` → `git rebase --continue`.
 ### 5) Check before you push / ask for review
 
 ```bash
-bun run check-types
+bun run check
 ```
 
 ### 6) Push and open a PR
@@ -84,7 +84,7 @@ gh pr create --fill
 PR description should be short and useful:
 
 - **Summary**: 1–3 bullets (what changed + why)
-- **Testing**: include what you ran (always `bun run check-types`)
+- **Testing**: include what you ran (always `bun run check`)
 - **Notes**: follow-ups, screenshots for UI changes
 
 Suggested PR template:
@@ -94,7 +94,7 @@ Suggested PR template:
 -
 
 ## Testing
-- [ ] bun run check-types
+- [ ] bun run check
 
 ## Notes
 -
