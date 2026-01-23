@@ -6,13 +6,18 @@ import ReactDOM from "react-dom/client";
 import { authClient } from "@/lib/auth-client";
 
 import Loader from "./components/loader";
+import { RouterError } from "./components/router/route-error";
+import { RouterNotFound } from "./components/router/not-found";
 import { routeTree } from "./routeTree.gen";
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  scrollRestoration: true,
   defaultPendingComponent: () => <Loader />,
+  defaultErrorComponent: RouterError,
+  defaultNotFoundComponent: RouterNotFound,
   context: {},
   Wrap: function WrapComponent({ children }: { children: React.ReactNode }) {
     return (

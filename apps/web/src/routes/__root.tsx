@@ -1,5 +1,6 @@
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Outlet, createRootRouteWithContext, useElementScrollRestoration } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { useRef } from "react";
 
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -32,6 +33,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootComponent() {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  useElementScrollRestoration({
+    id: "root-scroll",
+    getElement: () => scrollAreaRef.current,
+  });
+
   return (
     <>
       <HeadContent />
@@ -43,7 +50,9 @@ function RootComponent() {
       >
         <div className="grid grid-rows-[auto_1fr] h-[100dvh] overflow-hidden">
           <Header />
-          <Outlet />
+          <div ref={scrollAreaRef} className="min-h-0 overflow-y-auto">
+            <Outlet />
+          </div>
         </div>
         <AgentSidebar />
         <Toaster richColors />

@@ -2,7 +2,7 @@ import { api } from "@BetterRepo/backend/convex/_generated/api";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { Badge } from "@/components/ui/badge";
-import { Book, Plus, Zap, GitBranch, ArrowRight, Github } from "lucide-react";
+import { Book, Plus, Zap, Github } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Loader from "@/components/loader";
@@ -28,53 +28,26 @@ function HomeComponent() {
 
   if (user === null) {
     return (
-      <div className="flex flex-col min-h-screen bg-background selection:bg-primary/10">
-        {/* Minimal Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="flex items-center gap-2">
-            <GitBranch className="w-6 h-6 text-primary" />
-            <span className="text-lg font-bold tracking-tight">BetterRepo</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <a
-              href="https://github.com/Noisemaker111/BetterRepo"
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Github className="w-5 h-5" />
-            </a>
-            <Link to="/auth" className={cn(buttonVariants({ variant: "default", size: "sm" }))}>
-              Sign In
-            </Link>
-          </div>
-        </header>
-
-        <main className="flex-1 flex flex-col items-center justify-center p-6 sm:p-12 gap-12">
-          <div className="text-center space-y-6 max-w-3xl pt-10 sm:pt-20">
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tighter text-foreground">
-              The reactive <br className="hidden sm:block" />
-              repo manager.
-            </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto">
-              Built for speed. Synchronized in real-time.
-              <br className="hidden sm:block" />
-              Automate your workflow with AI agents that actually understand code.
+      <div className="flex-1 min-h-0 overflow-y-auto bg-background selection:bg-primary/10">
+        <div className="container py-10 sm:py-14">
+          <div className="max-w-2xl space-y-4">
+            <h1 className="text-3xl sm:text-4xl font-display font-bold tracking-tight text-foreground">Home</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Sign in to view your dashboard, connect repositories, and track issues.
             </p>
-            
-            <div className="flex items-center justify-center gap-4 pt-4">
+
+            <div className="flex items-center gap-3 pt-2">
               <Link
                 to="/auth"
-                className={cn(buttonVariants({ size: "lg" }), "rounded-full px-8 font-bold")}
+                className={cn(buttonVariants({ variant: "default", size: "sm" }), "rounded-full px-4")}
               >
-                Start Building
-                <ArrowRight className="ml-2 w-4 h-4" />
+                Sign In
               </Link>
               <a
                 href="https://github.com/Noisemaker111/BetterRepo"
                 target="_blank"
                 rel="noreferrer"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8")}
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }), "rounded-full px-4")}
               >
                 <Github className="mr-2 w-4 h-4" />
                 GitHub
@@ -82,14 +55,15 @@ function HomeComponent() {
             </div>
           </div>
 
-          <div className="w-full max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 pb-20">
-             <InteractiveDemo />
+          <div className="mt-10 sm:mt-12">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-bold tracking-tight text-foreground">Preview</h2>
+            </div>
+            <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <InteractiveDemo />
+            </div>
           </div>
-        </main>
-
-        <footer className="py-8 text-center text-sm text-muted-foreground border-t border-border/40">
-          <p>© {new Date().getFullYear()} BetterRepo. Open Source & Powered by Convex.</p>
-        </footer>
+        </div>
       </div>
     );
   }
@@ -98,7 +72,7 @@ function HomeComponent() {
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-background/50 overflow-hidden">
       <div className="flex flex-col h-full">
-        <div className="px-4 sm:px-6 py-4 sm:py-6 border-b bg-background/50 shrink-0">
+        <div className="px-4 sm:px-6 py-4 sm:py-6 shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1 text-left">
               <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Dashboard</h1>
@@ -143,7 +117,7 @@ function HomeComponent() {
                         <p className="text-xs sm:text-sm text-muted-foreground">Nothing to see here for now. Try starring some repos!</p>
                       </div>
                     ) : (
-                      forYouIssues.map((issue: any) => (
+                      forYouIssues.map((issue) => (
                         <Link
                           key={issue._id}
                           to="/issues"

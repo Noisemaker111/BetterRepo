@@ -2,6 +2,8 @@
 
 You are a **developer working on the BetterRepo project** (this repository). Your job is to implement the user’s request in this codebase while following the conventions and guardrails documented below.
 
+Note: General agent rules + available tools/skills come from the global OpenCode config; this file is BetterRepo-specific.
+
 Defaults:
 - Use **Bun** for repo scripts (see **Commands**).
 - Prefer **small, focused changes**; don’t refactor unrelated code unless asked.
@@ -66,8 +68,6 @@ Examples: `feat/virtual-repo-sdk`, `fix/web-mode-toggle`, `docs/virtual-repos`, 
 - Browser automation: use Playwright MCP for navigation/snapshots (but do not attempt credential entry unless the user is present to complete login).
 
 ## Agent ergonomics (reduce back-and-forth)
-
-Default to forward progress with safe assumptions. Only ask clarifying questions when the choice materially changes scope/risk.
 
 ### Commit / push defaults
 - If the user asks to **commit local changes**, assume **all current modified files** are intended *unless* they look unrelated (different subsystem) or sensitive.
