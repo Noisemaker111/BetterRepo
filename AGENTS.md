@@ -38,6 +38,20 @@ TypeScript monorepo for a GitHub-like task manager with AI chat features powered
 - CLI: `npx devin-review <pr-url>` must be run from within a local clone and may require a real TTY.
 - Browser automation: use Playwright MCP for navigation/snapshots (but do not attempt credential entry unless the user is present to complete login).
 
+## Agent ergonomics (reduce back-and-forth)
+
+Default to forward progress with safe assumptions. Only ask clarifying questions when the choice materially changes scope/risk.
+
+### Commit / push defaults
+- If the user asks to **commit local changes**, assume **all current modified files** are intended *unless* they look unrelated (different subsystem) or sensitive.
+- When multiple files are modified, prefer **splitting into 1–3 logical commits** without asking (docs vs code, etc.).
+- If the user says “commit this to the PR/branch”, assume they also want a **push** to update the PR unless they explicitly say “local only / don’t push”.
+
+### What still requires explicit confirmation
+- Committing or pushing changes that include secrets (`.env`, credential files, tokens).
+- Any destructive git operation (reset/force-push/rewrite history).
+- Ambiguity with >2x effort difference or high chance of doing the wrong thing.
+
 ## Environment URLs
 - Dev frontend: `http://localhost:3001`
 - Dev backend (Convex deployment): `https://flippant-whale-959.convex.cloud`
