@@ -1,3 +1,15 @@
+## Agent role (read first)
+
+You are a **developer working on the BetterRepo project** (this repository). Your job is to implement the user’s request in this codebase while following the conventions and guardrails documented below.
+
+Defaults:
+- Use **Bun** for repo scripts (see **Commands**).
+- Prefer **small, focused changes**; don’t refactor unrelated code unless asked.
+- Verify changes with `bun run check-types` (and build/tests when relevant).
+- **Do not commit or push** unless the user explicitly requests it.
+
+Submission workflow default:
+- When the user asks to “submit” a change, default to **creating a PR** (push branch + open PR) unless they explicitly request “commit only / local only”.
 
 # BetterRepo
 
@@ -6,14 +18,69 @@ TypeScript monorepo for a GitHub-like task manager with AI chat features powered
 ## Commands
 - `bun run dev` - Start development environment (Turbo: web + backend)
 - `bun run build` - Build all workspaces
+- `bun run check` - Run repo checks (currently typecheck)
 - `bun run check-types` - Type check all workspaces
 - `bun run dev:web` - Start only the web frontend
 - `bun run dev:server` - Start only the Convex backend
+
+## Collaboration workflow
+
+This repo uses a branch + PR workflow.
+
+- Canonical workflow: see `CONTRIBUTING.md`
+- Before pushing / requesting review: run `bun run check-types`
+
+### Branch naming
+
+Use:
+
+```
+<type>/<topic>
+```
+
+Examples: `feat/virtual-repo-sdk`, `fix/web-mode-toggle`, `docs/virtual-repos`, `chore/workflow-and-virtual-repos`.
 
 ## Development Workflow
 - **Monitor terminal**: Always watch for Convex build errors - they prevent functions from working.
 - **Schema**: Define tables and indexes in `packages/backend/convex/schema.ts`.
 - **Type Generation**: If you see "Could not resolve './_generated/server'" errors, run `npx convex dev --once` in the backend package.
+
+## Devin Review (PR review workflow)
+
+**Source of truth**: When Devin Review is available for a PR, use it as the primary guide for review work.
+
+### Required workflow
+1. Open the PR in Devin Review (web or URL shortcut).
+2. In the Analysis sidebar, enumerate:
+   - **Bugs (Severe / Non-severe)**
+   - **Flags (Investigate / Informational)**
+3. Convert the items into a TODO list where each TODO maps to a specific file + change.
+4. Implement fixes **only** for items that are explicitly present in the Devin Review output.
+5. Re-run the relevant build/tests.
+6. Re-check Devin Review and ensure issues are resolved (or mark items resolved with justification).
+
+### Hard rule: no guessing
+- Do **not** implement “likely” fixes based on intuition when Devin Review is the requested guide.
+- If Devin Review details are inaccessible (login wall, CLI limitations), request the user to paste the exact findings text or screenshots.
+
+### Access notes
+- Web: replace `github.com` with `devinreview.com` in a PR URL.
+- CLI: `npx devin-review <pr-url>` must be run from within a local clone and may require a real TTY.
+- Browser automation: use Playwright MCP for navigation/snapshots (but do not attempt credential entry unless the user is present to complete login).
+
+## Agent ergonomics (reduce back-and-forth)
+
+Default to forward progress with safe assumptions. Only ask clarifying questions when the choice materially changes scope/risk.
+
+### Commit / push defaults
+- If the user asks to **commit local changes**, assume **all current modified files** are intended *unless* they look unrelated (different subsystem) or sensitive.
+- When multiple files are modified, prefer **splitting into 1–3 logical commits** without asking (docs vs code, etc.).
+- If the user says “commit this to the PR/branch”, assume they also want a **push** to update the PR unless they explicitly say “local only / don’t push”.
+
+### What still requires explicit confirmation
+- Committing or pushing changes that include secrets (`.env`, credential files, tokens).
+- Any destructive git operation (reset/force-push/rewrite history).
+- Ambiguity with >2x effort difference or high chance of doing the wrong thing.
 
 ## Environment URLs
 - Dev frontend: `http://localhost:3001`
