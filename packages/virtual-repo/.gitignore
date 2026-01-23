@@ -1,0 +1,9 @@
+dist/
+dist-smoke/
+node_modules/
+.turbo/
+
+# local build artifacts
+examples/*.js
+examples/*.d.ts
+examples/*.map
