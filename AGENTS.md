@@ -15,6 +15,29 @@ TypeScript monorepo for a GitHub-like task manager with AI chat features powered
 - **Schema**: Define tables and indexes in `packages/backend/convex/schema.ts`.
 - **Type Generation**: If you see "Could not resolve './_generated/server'" errors, run `npx convex dev --once` in the backend package.
 
+## Devin Review (PR review workflow)
+
+**Source of truth**: When Devin Review is available for a PR, use it as the primary guide for review work.
+
+### Required workflow
+1. Open the PR in Devin Review (web or URL shortcut).
+2. In the Analysis sidebar, enumerate:
+   - **Bugs (Severe / Non-severe)**
+   - **Flags (Investigate / Informational)**
+3. Convert the items into a TODO list where each TODO maps to a specific file + change.
+4. Implement fixes **only** for items that are explicitly present in the Devin Review output.
+5. Re-run the relevant build/tests.
+6. Re-check Devin Review and ensure issues are resolved (or mark items resolved with justification).
+
+### Hard rule: no guessing
+- Do **not** implement “likely” fixes based on intuition when Devin Review is the requested guide.
+- If Devin Review details are inaccessible (login wall, CLI limitations), request the user to paste the exact findings text or screenshots.
+
+### Access notes
+- Web: replace `github.com` with `devinreview.com` in a PR URL.
+- CLI: `npx devin-review <pr-url>` must be run from within a local clone and may require a real TTY.
+- Browser automation: use Playwright MCP for navigation/snapshots (but do not attempt credential entry unless the user is present to complete login).
+
 ## Environment URLs
 - Dev frontend: `http://localhost:3001`
 - Dev backend (Convex deployment): `https://flippant-whale-959.convex.cloud`
