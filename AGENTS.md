@@ -27,6 +27,16 @@ This repo uses a branch + PR workflow.
 - Canonical workflow: see `CONTRIBUTING.md`
 - Before pushing / requesting review: run `bun run check`
 
+### Branch naming
+
+Use:
+
+```
+<type>/<topic>
+```
+
+Examples: `feat/virtual-repo-sdk`, `fix/web-mode-toggle`, `docs/virtual-repos`, `chore/workflow-and-virtual-repos`.
+
 ## Development Workflow
 - **Monitor terminal**: Always watch for Convex build errors - they prevent functions from working.
 - **Schema**: Define tables and indexes in `packages/backend/convex/schema.ts`.

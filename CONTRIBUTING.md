@@ -23,18 +23,20 @@ git pull --rebase
 Branch name format:
 
 ```
-<you>/<topic>
+<type>/<topic>
 ```
 
 Examples:
 
 ```
-jk/virtual-repos-readme
-alex/fix-kanban-dnd
+feat/virtual-repo-sdk
+fix/web-mode-toggle
+docs/virtual-repos
+chore/workflow-and-virtual-repos
 ```
 
 ```bash
-git switch -c <you>/<topic>
+git switch -c <type>/<topic>
 ```
 
 ### 3) Commit as you go (precise)
