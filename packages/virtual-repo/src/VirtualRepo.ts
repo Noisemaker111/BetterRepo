@@ -17,19 +17,30 @@ type RawTreeEntry = {
 };
 
 function normalizePath(path: string): string {
-  return path.replace(/^\/+|\/+$/g, "");
+  const trimmed = path.replace(/^\/+|\/+$/g, "");
+  if (trimmed.includes("\\")) {
+    throw new Error("Invalid path: use '/' separators");
+  }
+  const parts = trimmed.split("/");
+  if (parts.some((p) => p === "..")) {
+    throw new Error("Invalid path: '..' segments are not allowed");
+  }
+  return trimmed;
 }
 
 function decodeBase64ToUtf8(base64: string): string {
+  // GitHub may include newlines in base64 content.
+  const normalizedBase64 = base64.replace(/\s+/g, "");
+
   // Node.js
   const maybeBuffer = (globalThis as unknown as { Buffer?: typeof Buffer }).Buffer;
   if (typeof maybeBuffer !== "undefined") {
-    return maybeBuffer.from(base64, "base64").toString("utf-8");
+    return maybeBuffer.from(normalizedBase64, "base64").toString("utf-8");
   }
 
   // Browser
   if (typeof atob !== "undefined" && typeof TextDecoder !== "undefined") {
-    const binaryString = atob(base64);
+    const binaryString = atob(normalizedBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
@@ -44,7 +55,7 @@ export class VirtualRepo {
   private octokit: Octokit;
   private owner: string;
   private repo: string;
-  private ref: string; // branch or commit sha
+  private ref: string; // branch name, tag, or commit sha
   private treeCache: Map<string, TreeEntry[]> = new Map(); // owner/repo/ref → entries
   private blobCache: Map<string, string> = new Map(); // sha → content
 
@@ -68,16 +79,20 @@ export class VirtualRepo {
     const cached = this.treeCache.get(key);
     if (cached) return cached;
 
+    const treeSha = await this.resolveTreeSha(this.ref);
+
     const { data } = await this.octokit.rest.git.getTree({
       owner: this.owner,
       repo: this.repo,
-      tree_sha: this.ref,
-      recursive: "true",
+      tree_sha: treeSha,
+      recursive: "1",
     });
 
     if (data.truncated) {
-      // Fallback to what GitHub returned; callers can still use listdir/readFile.
-      // Future improvement: fetch subtrees to complete the tree.
+      throw new Error(
+        `Git tree response was truncated for ${this.owner}/${this.repo} at ref '${this.ref}'. ` +
+          "This repo is too large for a single recursive tree fetch.",
+      );
     }
 
     const entries = (data.tree ?? [])
@@ -90,6 +105,40 @@ export class VirtualRepo {
 
     this.treeCache.set(key, entries);
     return entries;
+  }
+
+  private async resolveTreeSha(ref: string): Promise<string> {
+    // If ref is already a SHA (commit/tree), prefer it.
+    if (/^[0-9a-f]{40}$/i.test(ref)) return ref;
+
+    // Try common ref shapes.
+    const refCandidates = [`heads/${ref}`, `tags/${ref}`];
+    for (const candidate of refCandidates) {
+      try {
+        const { data } = await this.octokit.rest.git.getRef({
+          owner: this.owner,
+          repo: this.repo,
+          ref: candidate,
+        });
+        const commitSha = data.object.sha;
+        const { data: commit } = await this.octokit.rest.git.getCommit({
+          owner: this.owner,
+          repo: this.repo,
+          commit_sha: commitSha,
+        });
+        return commit.tree.sha;
+      } catch {
+        // keep trying
+      }
+    }
+
+    // As a last resort, try treating the ref string as a commit sha-ish (may still fail).
+    const { data: commit } = await this.octokit.rest.git.getCommit({
+      owner: this.owner,
+      repo: this.repo,
+      commit_sha: ref,
+    });
+    return commit.tree.sha;
   }
 
   async listdir(path: string = ""): Promise<string[]> {
