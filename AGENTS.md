@@ -1,3 +1,12 @@
+## Agent role (read first)
+
+You are a **developer working on the BetterRepo project** (this repository). Your job is to implement the user’s request in this codebase while following the conventions and guardrails documented below.
+
+Defaults:
+- Use **Bun** for repo scripts (see **Commands**).
+- Prefer **small, focused changes**; don’t refactor unrelated code unless asked.
+- Verify changes with `bun run check` (and build/tests when relevant).
+- **Do not commit or push** unless the user explicitly requests it.
 
 # BetterRepo
 
@@ -6,9 +15,27 @@ TypeScript monorepo for a GitHub-like task manager with AI chat features powered
 ## Commands
 - `bun run dev` - Start development environment (Turbo: web + backend)
 - `bun run build` - Build all workspaces
+- `bun run check` - Run repo checks (currently typecheck)
 - `bun run check-types` - Type check all workspaces
 - `bun run dev:web` - Start only the web frontend
 - `bun run dev:server` - Start only the Convex backend
+
+## Collaboration workflow
+
+This repo uses a branch + PR workflow.
+
+- Canonical workflow: see `CONTRIBUTING.md`
+- Before pushing / requesting review: run `bun run check`
+
+### Branch naming
+
+Use:
+
+```
+<type>/<topic>
+```
+
+Examples: `feat/virtual-repo-sdk`, `fix/web-mode-toggle`, `docs/virtual-repos`, `chore/workflow-and-virtual-repos`.
 
 ## Development Workflow
 - **Monitor terminal**: Always watch for Convex build errors - they prevent functions from working.

@@ -15,6 +15,64 @@ This project was created with [Better-T-Stack](https://github.com/AmanVarshney01
 - **Convex** - Reactive backend-as-a-service platform
 - **Authentication** - Better-Auth
 - **Turborepo** - Optimized monorepo build system
+- **Virtual Repos** - Browse any GitHub repo without cloning
+
+## Virtual Repos
+
+No more cloning every repo into your favorite source folder. `@betterrepo/virtual-repo` gives you a virtual filesystem over any GitHub repository - read files, list directories, and explore code on-demand without touching your disk.
+
+### Usage
+
+```typescript
+import { VirtualRepo } from "@betterrepo/virtual-repo";
+
+// Point at any public repo (or private with a token)
+const repo = new VirtualRepo("facebook/react", { branch: "main" });
+
+// List root directory
+const files = await repo.listdir("");
+// → ["packages/", "scripts/", "README.md", "package.json", ...]
+
+// Read any file directly
+const readme = await repo.readFile("README.md");
+
+// Check if paths exist
+await repo.exists("packages/react");        // true
+await repo.isDirectory("packages/react");   // true
+
+// Find files by extension
+const tsFiles = await repo.findFiles([".ts", ".tsx"]);
+
+// Get repo metadata
+const info = await repo.getRepoInfo();
+// → { owner, name, defaultBranch, description, lastCommitSha }
+```
+
+### Options
+
+```typescript
+new VirtualRepo("owner/repo", {
+  branch: "main",           // branch, tag, or commit SHA (default: "main")
+  token: "ghp_xxx"          // GitHub token for private repos or higher rate limits
+});
+```
+
+### API
+
+| Method | Description |
+|--------|-------------|
+| `listdir(path?)` | List directory contents (files and subdirs) |
+| `readFile(path)` | Read file contents as UTF-8 string |
+| `exists(path)` | Check if path exists |
+| `isDirectory(path)` | Check if path is a directory |
+| `findFiles(exts)` | Find all files matching extension(s) |
+| `getRepoInfo()` | Get repository metadata |
+
+### How It Works
+
+VirtualRepo uses the GitHub Git Trees API to fetch the entire file tree in a single request, then lazily fetches blob contents on-demand. Results are cached in memory, so repeated reads are instant.
+
+Perfect for AI agents, code analysis tools, or any workflow where you need to explore repos without the overhead of git clone.
 
 ## Getting Started
 
@@ -22,6 +80,15 @@ First, install the dependencies:
 
 ```bash
 bun install
+```
+
+## Contributing / Workflow
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the reproducible branch + PR workflow.
+Before pushing or requesting review, run:
+
+```bash
+bun run check
 ```
 
 ## Convex Setup
