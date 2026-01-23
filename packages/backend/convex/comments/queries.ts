@@ -20,3 +20,10 @@ export const listForPR = query({
       .collect();
   },
 });
+
+export const get = query({
+  args: { id: v.id("comments") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});

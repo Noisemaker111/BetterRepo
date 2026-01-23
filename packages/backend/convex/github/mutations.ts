@@ -100,6 +100,7 @@ export const importRepository = internalMutation({
         defaultBranch: v.string(),
         isPrivate: v.boolean(),
     },
+    returns: v.id("repositories"),
     handler: async (ctx, args) => {
         // Check if repo already exists
         const existing = await ctx.db
@@ -232,6 +233,38 @@ export const logSyncEvent = internalMutation({
 });
 
 /**
+ * Record webhook delivery for idempotency
+ * Returns true if this delivery is new
+ */
+export const recordWebhookDelivery = internalMutation({
+    args: {
+        repositoryId: v.id("repositories"),
+        deliveryId: v.string(),
+        event: v.string(),
+        action: v.optional(v.string()),
+    },
+    returns: v.boolean(),
+    handler: async (ctx, args): Promise<boolean> => {
+        const existing = await ctx.db
+            .query("githubWebhookDeliveries")
+            .withIndex("by_deliveryId", (q) => q.eq("deliveryId", args.deliveryId))
+            .unique();
+
+        if (existing) return false;
+
+        await ctx.db.insert("githubWebhookDeliveries", {
+            repositoryId: args.repositoryId,
+            deliveryId: args.deliveryId,
+            event: args.event,
+            action: args.action,
+            receivedAt: Date.now(),
+        });
+
+        return true;
+    },
+});
+
+/**
  * Sync an issue from GitHub (create or update)
  */
 export const syncIssueFromGitHub = internalMutation({
@@ -246,13 +279,12 @@ export const syncIssueFromGitHub = internalMutation({
         authorId: v.string(), // Will be the importing user's ID if author not in system
     },
     handler: async (ctx, args) => {
-        // Check if issue already exists by githubId
-        const existingIssues = await ctx.db
+        const existing = await ctx.db
             .query("issues")
-            .withIndex("by_githubId", (q) => q.eq("githubId", args.githubId))
-            .collect();
-
-        const existing = existingIssues.find(i => i.repositoryId?.toString() === args.repositoryId.toString());
+            .withIndex("by_repositoryId_and_githubId", (q) =>
+                q.eq("repositoryId", args.repositoryId).eq("githubId", args.githubId)
+            )
+            .unique();
 
         // Map GitHub state to BetterRepo status
         const status = args.state === "closed" ? "closed" : "backlog";
@@ -285,6 +317,58 @@ export const syncIssueFromGitHub = internalMutation({
 });
 
 /**
+ * Sync an issue comment from GitHub (create or update)
+ */
+export const syncIssueCommentFromGitHub = internalMutation({
+    args: {
+        repositoryId: v.id("repositories"),
+        issueGithubId: v.number(),
+        commentGithubId: v.number(),
+        commentNodeId: v.string(),
+        commentUrl: v.string(),
+        body: v.string(),
+        authorId: v.string(),
+    },
+    returns: v.union(v.id("comments"), v.null()),
+    handler: async (ctx, args) => {
+        const issue = await ctx.db
+            .query("issues")
+            .withIndex("by_repositoryId_and_githubId", (q) =>
+                q.eq("repositoryId", args.repositoryId).eq("githubId", args.issueGithubId)
+            )
+            .unique();
+
+        if (!issue) return null;
+
+        const existing = await ctx.db
+            .query("comments")
+            .withIndex("by_issueId_and_githubId", (q) =>
+                q.eq("issueId", issue._id).eq("githubId", args.commentGithubId)
+            )
+            .unique();
+
+        if (existing) {
+            await ctx.db.patch(existing._id, {
+                body: args.body,
+                githubUrl: args.commentUrl,
+                lastSyncedAt: Date.now(),
+            });
+            return existing._id;
+        }
+
+        return await ctx.db.insert("comments", {
+            body: args.body,
+            authorId: args.authorId,
+            issueId: issue._id,
+            githubId: args.commentGithubId,
+            githubNodeId: args.commentNodeId,
+            githubUrl: args.commentUrl,
+            lastSyncedAt: Date.now(),
+        });
+    },
+});
+
+/**
  * Sync a PR from GitHub (create or update)
  */
 export const syncPRFromGitHub = internalMutation({
@@ -302,13 +386,12 @@ export const syncPRFromGitHub = internalMutation({
         authorId: v.string(),
     },
     handler: async (ctx, args) => {
-        // Check if PR already exists by githubId
-        const existingPRs = await ctx.db
+        const existing = await ctx.db
             .query("pullRequests")
-            .withIndex("by_githubId", (q) => q.eq("githubId", args.githubId))
-            .collect();
-
-        const existing = existingPRs.find(pr => pr.repositoryId?.toString() === args.repositoryId.toString());
+            .withIndex("by_repositoryId_and_githubId", (q) =>
+                q.eq("repositoryId", args.repositoryId).eq("githubId", args.githubId)
+            )
+            .unique();
 
         // Map GitHub state to BetterRepo status
         let status: "open" | "merged" | "closed";

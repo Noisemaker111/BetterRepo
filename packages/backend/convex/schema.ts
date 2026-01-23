@@ -34,6 +34,7 @@ export default defineSchema({
     .index("by_repositoryId", ["repositoryId"])
     .index("by_priority", ["priority"])
     .index("by_githubId", ["githubId"])
+    .index("by_repositoryId_and_githubId", ["repositoryId", "githubId"])
     .vectorIndex("by_embedding", {
       vectorField: "embedding",
       dimensions: 1536,
@@ -97,7 +98,8 @@ export default defineSchema({
     .index("by_authorId", ["authorId"])
     .index("by_issueId", ["issueId"])
     .index("by_repositoryId", ["repositoryId"])
-    .index("by_githubId", ["githubId"]),
+    .index("by_githubId", ["githubId"])
+    .index("by_repositoryId_and_githubId", ["repositoryId", "githubId"]),
   labels: defineTable({
     name: v.string(),
     color: v.string(), // hex code
@@ -108,8 +110,16 @@ export default defineSchema({
     authorId: v.string(),
     issueId: v.optional(v.id("issues")),
     prId: v.optional(v.id("pullRequests")),
+    // GitHub sync fields
+    githubId: v.optional(v.number()),
+    githubNodeId: v.optional(v.string()),
+    githubUrl: v.optional(v.string()),
+    lastSyncedAt: v.optional(v.number()),
   }).index("by_issueId", ["issueId"])
-    .index("by_prId", ["prId"]),
+    .index("by_prId", ["prId"])
+    .index("by_githubId", ["githubId"])
+    .index("by_issueId_and_githubId", ["issueId", "githubId"])
+    .index("by_prId_and_githubId", ["prId", "githubId"]),
   todos: defineTable({
     text: v.string(),
     completed: v.boolean(),
@@ -147,6 +157,16 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_repositoryId", ["repositoryId"])
     .index("by_timestamp", ["timestamp"]),
+
+  // Webhook delivery idempotency
+  githubWebhookDeliveries: defineTable({
+    repositoryId: v.id("repositories"),
+    deliveryId: v.string(),
+    event: v.string(),
+    action: v.optional(v.string()),
+    receivedAt: v.number(),
+  }).index("by_deliveryId", ["deliveryId"])
+    .index("by_repositoryId", ["repositoryId"]),
 
   // Cached repository file contents for faster viewing
   repositoryFiles: defineTable({

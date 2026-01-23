@@ -51,6 +51,17 @@ export interface GitHubIssue {
     closed_at: string | null;
 }
 
+// GitHub Issue Comment
+export interface GitHubIssueComment {
+    id: number;
+    node_id: string;
+    body: string | null;
+    html_url: string;
+    user: GitHubUser;
+    created_at: string;
+    updated_at: string;
+}
+
 // GitHub Label
 export interface GitHubLabel {
     id: number;
@@ -140,6 +151,13 @@ export interface PullRequestWebhookPayload extends GitHubWebhookPayload {
         title?: { from: string };
         body?: { from: string };
     };
+}
+
+// Issue comment webhook payload
+export interface IssueCommentWebhookPayload extends GitHubWebhookPayload {
+    action: "created" | "edited" | "deleted";
+    issue: GitHubIssue;
+    comment: GitHubIssueComment;
 }
 
 // GitHub API Error

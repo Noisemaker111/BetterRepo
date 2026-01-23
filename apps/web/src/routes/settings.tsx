@@ -50,6 +50,7 @@ function SettingsPage() {
   const github = useGitHubIntegration(userId);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [settingUpWebhookRepoId, setSettingUpWebhookRepoId] = useState<string | null>(null);
 
   // Profile state
   const [name, setName] = useState("");
@@ -452,6 +453,34 @@ function SettingsPage() {
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
+                                {!repo.webhookId && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={settingUpWebhookRepoId === repo._id}
+                                    onClick={() => {
+                                      setSettingUpWebhookRepoId(repo._id);
+                                      github.setupWebhook(repo._id)
+                                        .then((ok) => {
+                                          toast.success(ok ? "Live sync enabled" : "Webhook not created");
+                                        })
+                                        .catch((error) => {
+                                          toast.error(error.message || "Webhook setup failed");
+                                        })
+                                        .finally(() => {
+                                          setSettingUpWebhookRepoId(null);
+                                        });
+                                    }}
+                                    className="gap-2"
+                                  >
+                                    {settingUpWebhookRepoId === repo._id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <LinkIcon className="w-4 h-4" />
+                                    )}
+                                    Enable Live Sync
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="sm"

@@ -70,6 +70,7 @@ function IssuesRoute() {
         authorId: session.user.id,
         labelIds: [],
         repositoryId: repository._id,
+        syncToGitHub,
         status: "backlog",
       });
       setTitle("");

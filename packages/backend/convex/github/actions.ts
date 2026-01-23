@@ -9,6 +9,10 @@ import { internal, api } from "../_generated/api";
 import * as githubApi from "./api";
 import * as pullRequestsMutations from "../pullRequests/mutations";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
 /**
  * Complete GitHub OAuth flow and save connection
  * Called after user authorizes the GitHub OAuth app
@@ -177,16 +181,72 @@ export const importRepository = action({
 
         // Schedule async cache warming (fire and forget)
         ctx.scheduler.runAfter(0, api.github.actions.warmRepositoryFileCache, {
-            repositoryId: repositoryId as any,
+            repositoryId,
             owner,
             repo: repoName,
             branch: repo.default_branch,
         });
 
+        // Schedule a full sync to populate issues/PRs immediately
+        ctx.scheduler.runAfter(0, api.github.actions.fullSync, {
+            userId: args.userId,
+            repositoryId,
+        });
+
+        // Best-effort webhook setup (requires admin permissions on GitHub)
+        let hasWebhook = false;
+        if (permission.permission === "admin") {
+            const webhookResult = await ctx.runAction(internal.github.actions.setupWebhook, {
+                userId: args.userId,
+                repositoryId,
+            });
+            hasWebhook = webhookResult.webhookId != null;
+        }
+
         return {
             repositoryId: repositoryId as string,
-            hasWebhook: false,
+            hasWebhook,
         };
+    },
+});
+
+/**
+ * Public wrapper to set up webhook for an already-imported repo
+ */
+export const setupWebhookForRepo = action({
+    args: {
+        repositoryId: v.id("repositories"),
+    },
+    handler: async (ctx, args): Promise<{ webhookId: number | null }> => {
+        const user = await ctx.runQuery(api.auth.getCurrentUser, {});
+        if (!isRecord(user)) {
+            throw new Error("Not authenticated");
+        }
+
+        const maybeUserId = user["userId"];
+        const maybeInternalId = user["_id"];
+        const userId = typeof maybeUserId === "string"
+            ? maybeUserId
+            : typeof maybeInternalId === "string"
+                ? maybeInternalId
+                : null;
+
+        if (!userId) {
+            throw new Error("Not authenticated");
+        }
+
+        const repo = await ctx.runQuery(internal.github.queries.getRepoForSync, {
+            repositoryId: args.repositoryId,
+        });
+
+        if (!repo || repo.ownerId !== userId) {
+            throw new Error("Repository not found or access denied");
+        }
+
+        return await ctx.runAction(internal.github.actions.setupWebhook, {
+            userId,
+            repositoryId: args.repositoryId,
+        });
     },
 });
 

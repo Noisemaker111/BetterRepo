@@ -40,6 +40,7 @@ export function useGitHubIntegration(userId: string | null) {
     const listReposAction = useAction(api.github.actions.listAvailableRepos);
     const importRepoAction = useAction(api.github.actions.importRepository);
     const fullSyncAction = useAction(api.github.actions.fullSync);
+    const setupWebhookAction = useAction(api.github.actions.setupWebhookForRepo);
 
     // Mutations
     const disconnectMutation = useMutation(api.github.mutations.disconnectGitHub);
@@ -126,6 +127,11 @@ export function useGitHubIntegration(userId: string | null) {
         await toggleSyncMutation({ repositoryId, enabled });
     }, [toggleSyncMutation]);
 
+    const setupWebhook = useCallback(async (repositoryId: Id<"repositories">) => {
+        const res = await setupWebhookAction({ repositoryId });
+        return res.webhookId != null;
+    }, [setupWebhookAction]);
+
     return {
         // Connection state
         isConnected: !!connection?.hasToken,
@@ -147,5 +153,6 @@ export function useGitHubIntegration(userId: string | null) {
         importRepository,
         syncRepository,
         toggleSync,
+        setupWebhook,
     };
 }
