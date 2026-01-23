@@ -10,6 +10,7 @@ export const create = mutation({
     authorId: v.string(),
     labelIds: v.array(v.id("labels")),
     repositoryId: v.optional(v.id("repositories")),
+    syncToGitHub: v.optional(v.boolean()),
     status: v.optional(v.union(
       v.literal("backlog"),
       v.literal("todo"),
@@ -39,7 +40,7 @@ export const create = mutation({
     await ctx.scheduler.runAfter(0, internal.issues.actions.updateEmbeddingAction, { issueId });
 
     // If linked to a GitHub repo, push to GitHub (two-way sync)
-    if (args.repositoryId) {
+    if (args.repositoryId && args.syncToGitHub !== false) {
       const repo = await ctx.db.get(args.repositoryId);
       if (repo?.githubId && repo.syncEnabled) {
         await ctx.scheduler.runAfter(0, internal.issues.actions.pushNewIssueToGitHub, {

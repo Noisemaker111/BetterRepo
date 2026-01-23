@@ -15,6 +15,7 @@ import type {
     GitHubReadme,
     GitHubLanguages,
     GitHubBranch,
+    GitHubIssueComment,
 } from "./types";
 
 const GITHUB_API_BASE = "https://api.github.com";
@@ -405,6 +406,44 @@ export async function listBranches(
         { headers: getHeaders(accessToken) }
     );
     return handleResponse<GitHubBranch[]>(response);
+}
+
+// ============ Issue Comment Endpoints ============
+
+export async function createIssueComment(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    issueNumber: number,
+    data: { body: string }
+): Promise<GitHubIssueComment> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+        {
+            method: "POST",
+            headers: getHeaders(accessToken),
+            body: JSON.stringify(data),
+        }
+    );
+    return handleResponse<GitHubIssueComment>(response);
+}
+
+export async function updateIssueComment(
+    accessToken: string,
+    owner: string,
+    repo: string,
+    commentId: number,
+    data: { body: string }
+): Promise<GitHubIssueComment> {
+    const response = await fetch(
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/comments/${commentId}`,
+        {
+            method: "PATCH",
+            headers: getHeaders(accessToken),
+            body: JSON.stringify(data),
+        }
+    );
+    return handleResponse<GitHubIssueComment>(response);
 }
 
 /**
