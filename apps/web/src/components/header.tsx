@@ -1,4 +1,4 @@
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useMatch } from "@tanstack/react-router";
 import { ModeToggle } from "./mode-toggle";
 import { FcTreeStructure } from "react-icons/fc";
 import { useQuery } from "convex/react";
@@ -10,10 +10,12 @@ import { Github } from "lucide-react";
 
 export default function Header() {
   const user = useQuery(api.auth.getCurrentUser);
-  const params = useParams({ strict: false }) as { owner?: string; repo?: string };
+  const repoMatch = useMatch({ from: "/$owner/$repo", shouldThrow: false });
+  const ownerMatch = useMatch({ from: "/$owner", shouldThrow: false });
 
-  // Only show breadcrumb if we're on a repo page
-  const isRepoPage = params.owner && params.repo;
+  const owner = repoMatch?.params.owner ?? ownerMatch?.params.owner;
+  const repo = repoMatch?.params.repo;
+  const isRepoPage = owner !== undefined && repo !== undefined;
 
   return (
     <header className="sticky top-0 z-50 w-full glass border-b">
@@ -34,31 +36,31 @@ export default function Header() {
               <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
               <Link
                 to="/$owner"
-                params={{ owner: params.owner! }}
+                params={{ owner }}
                 className="text-foreground hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none"
               >
-                {params.owner}
+                {owner}
               </Link>
               <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
               <Link
                 to="/$owner/$repo"
-                params={{ owner: params.owner!, repo: params.repo! }}
+                params={{ owner, repo }}
                 className="text-foreground font-bold hover:opacity-80 transition-opacity px-0.5 sm:px-1 truncate max-w-[120px] sm:max-w-none"
               >
-                {params.repo}
+                {repo}
               </Link>
             </div>
-          ) : params.owner ? (
+          ) : owner ? (
             <div className="flex items-center gap-0.5 sm:gap-1.5 text-sm font-medium">
               <span className="text-muted-foreground/30 text-base sm:text-lg font-light select-none">/</span>
               <span className="text-foreground font-bold px-0.5 sm:px-1 truncate max-w-[80px] sm:max-w-none">
-                {params.owner}
+                {owner}
               </span>
             </div>
           ) : null}
         </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
             <a
               href="https://github.com/Noisemaker111/BetterRepo"
               target="_blank"

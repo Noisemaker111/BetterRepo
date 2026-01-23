@@ -13,7 +13,11 @@
       "typescript": "^5",
       "convex": "^1.29.3",
       "better-auth": "1.4.7",
-      "@convex-dev/better-auth": "^0.10.4"
+      "@convex-dev/better-auth": "^0.10.4",
+
+      "@tanstack/react-router": "^1.154.12",
+      "@tanstack/react-router-devtools": "^1.154.12",
+      "@tanstack/router-plugin": "^1.154.12"
     }
   },
   "type": "module",
